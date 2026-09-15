@@ -1,6 +1,6 @@
-# Shared Burdens
+# deep dive
 
-Interactive installation MVP for initial user testing — kiosk, live projection wall, and stewardship via QR.
+Interactive installation MVP for initial user testing — swipeable onboarding prompts, sea-creature artefacts, live projection wall, searchable archive, and stewardship via QR.
 
 ## Quick start
 
@@ -15,10 +15,19 @@ Open [http://localhost:3000](http://localhost:3000).
 | Route | Purpose |
 |-------|---------|
 | `/` | Testing hub |
-| `/kiosk` | Private multi-step submission |
+| `/kiosk` | Deep dive onboarding (prompt cards → fish → friction → release) |
 | `/gallery` | Searchable archive of all submissions |
 | `/projection` | Live constellation wall (second screen) |
 | `/steward/[id]` | Mobile stewardship via QR |
+
+### Prompt → creature
+
+| Prompt | Creature |
+|--------|----------|
+| Care | Turtle |
+| Worry | Seahorse |
+| Curiosity | Angelfish |
+| Voice | Betta |
 
 ## Phone / QR testing
 
@@ -33,5 +42,6 @@ Restart `npm run dev`, submit on the kiosk, then scan the on-screen QR from a ph
 ## Notes
 
 - Data is stored in local SQLite at `data/shared-burdens.db`
+- Branding references live in `public/branding/`
 - Thermal printing is stubbed; use on-screen receipt or browser print
 - Re-run `npm run seed` anytime to reset demo content

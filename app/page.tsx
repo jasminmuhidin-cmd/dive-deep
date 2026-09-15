@@ -2,42 +2,43 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-cream text-ink">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-70"
-        style={{
-          background:
-            "radial-gradient(ellipse at 20% 10%, #e8dcc8 0%, transparent 50%), radial-gradient(ellipse at 80% 90%, #d9cbb8 0%, transparent 45%), linear-gradient(160deg, #f3eee6 0%, #ebe4d8 100%)",
-        }}
-      />
+    <main className="relative min-h-screen overflow-hidden text-foam">
+      <div className="deep-dive-bg pointer-events-none absolute inset-0" />
       <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-stone">
+        <p className="font-mono text-xs uppercase tracking-[0.25em] text-sand/70">
           Installation testing hub
         </p>
-        <h1 className="mt-4 font-serif text-5xl leading-tight tracking-tight text-charcoal md:text-6xl">
-          Shared Burdens
+        <h1 className="mt-4 font-serif text-5xl leading-tight tracking-tight text-foam md:text-6xl">
+          deep dive
         </h1>
-        <p className="mt-5 max-w-xl text-lg leading-relaxed text-stone">
-          Open the kiosk to leave a worry and an offering. Keep the projection
-          visible on a second screen. Scan a receipt QR to steward someone
-          else&apos;s burden.
+        <div
+          className="mt-3 h-1.5 w-28 rounded-full"
+          style={{
+            background: "linear-gradient(90deg, #4b908d, #147a90, #c6979d)",
+          }}
+          aria-hidden
+        />
+        <p className="mt-5 max-w-xl text-lg leading-relaxed text-foam/65">
+          Open the kiosk to shape your fish. Browse the archive. Keep the
+          projection open on a second screen. Scan a QR to steward someone
+          else&apos;s thought.
         </p>
         <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
           <Link
             href="/kiosk"
-            className="rounded-sm bg-charcoal px-6 py-4 text-center text-cream transition hover:bg-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+            className="rounded-full bg-sand px-6 py-4 text-center text-navy transition hover:bg-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-seafoam"
           >
             Open kiosk
           </Link>
           <Link
             href="/gallery"
-            className="rounded-sm border border-charcoal/20 bg-cream/60 px-6 py-4 text-center text-charcoal transition hover:border-charcoal/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+            className="rounded-full border border-foam/20 px-6 py-4 text-center text-foam transition hover:border-foam/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand"
           >
             Browse archive
           </Link>
           <Link
             href="/projection"
-            className="rounded-sm border border-charcoal/20 bg-cream/60 px-6 py-4 text-center text-charcoal transition hover:border-charcoal/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+            className="rounded-full border border-foam/20 px-6 py-4 text-center text-foam transition hover:border-foam/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand"
           >
             Open projection
           </Link>

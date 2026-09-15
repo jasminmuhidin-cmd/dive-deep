@@ -20,9 +20,9 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shared Burdens",
+  title: "deep dive",
   description:
-    "An interactive installation exploring compassion fatigue through collective efficacy.",
+    "Don't just skim the surface. Find what anchors you — an interactive installation about care, friction, and collective action.",
 };
 
 export default function RootLayout({

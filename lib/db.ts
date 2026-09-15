@@ -7,6 +7,9 @@ import type {
   Category,
   CreateStewardshipInput,
   CreateSubmissionInput,
+  FishForm,
+  FrictionItem,
+  PromptType,
   StewardshipAction,
   Submission,
 } from "./types";
@@ -14,9 +17,26 @@ import type {
 const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "shared-burdens.db");
 
+const SELECT_COLS = `id, worry_text, offering_text, category, created_at, is_claimed,
+  prompt_type, fish_form, why_text, frictions`;
+
 const globalForDb = globalThis as unknown as {
   __sharedBurdensDb?: Database.Database;
 };
+
+function ensureColumn(
+  db: Database.Database,
+  table: string,
+  column: string,
+  definition: string,
+) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all() as {
+    name: string;
+  }[];
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
 
 function getDb(): Database.Database {
   if (globalForDb.__sharedBurdensDb) {
@@ -51,18 +71,57 @@ function getDb(): Database.Database {
     );
   `);
 
+  ensureColumn(db, "submissions", "prompt_type", "TEXT");
+  ensureColumn(db, "submissions", "fish_form", "TEXT");
+  ensureColumn(db, "submissions", "why_text", "TEXT");
+  ensureColumn(db, "submissions", "frictions", "TEXT DEFAULT '[]'");
+
   globalForDb.__sharedBurdensDb = db;
   return db;
 }
 
+type SubmissionRow = {
+  id: string;
+  worry_text: string;
+  offering_text: string;
+  category: Category;
+  created_at: string;
+  is_claimed: number;
+  prompt_type: string | null;
+  fish_form: string | null;
+  why_text: string | null;
+  frictions: string | null;
+};
+
+function mapSubmission(row: SubmissionRow): Submission {
+  let frictions: FrictionItem[] = [];
+  if (row.frictions) {
+    try {
+      const parsed = JSON.parse(row.frictions) as FrictionItem[];
+      if (Array.isArray(parsed)) frictions = parsed;
+    } catch {
+      frictions = [];
+    }
+  }
+
+  return {
+    id: row.id,
+    worry_text: row.worry_text,
+    offering_text: row.offering_text,
+    category: row.category,
+    created_at: row.created_at,
+    is_claimed: row.is_claimed,
+    prompt_type: (row.prompt_type as PromptType) || null,
+    fish_form: (row.fish_form as FishForm) || null,
+    why_text: row.why_text,
+    frictions,
+  };
+}
+
 export function listSubmissions(): Submission[] {
-  return getDb()
-    .prepare(
-      `SELECT id, worry_text, offering_text, category, created_at, is_claimed
-       FROM submissions
-       ORDER BY created_at ASC`,
-    )
-    .all() as Submission[];
+  return (
+    getDb().prepare(`SELECT ${SELECT_COLS} FROM submissions ORDER BY created_at ASC`).all() as SubmissionRow[]
+  ).map(mapSubmission);
 }
 
 export function searchSubmissions(options: {
@@ -73,9 +132,7 @@ export function searchSubmissions(options: {
   const category =
     options.category && options.category !== "all" ? options.category : null;
 
-  let sql = `SELECT id, worry_text, offering_text, category, created_at, is_claimed
-             FROM submissions
-             WHERE 1 = 1`;
+  let sql = `SELECT ${SELECT_COLS} FROM submissions WHERE 1 = 1`;
   const params: string[] = [];
 
   if (category) {
@@ -84,51 +141,67 @@ export function searchSubmissions(options: {
   }
 
   if (query) {
-    sql += ` AND (LOWER(worry_text) LIKE ? OR LOWER(offering_text) LIKE ?)`;
+    sql += ` AND (
+      LOWER(worry_text) LIKE ?
+      OR LOWER(offering_text) LIKE ?
+      OR LOWER(COALESCE(why_text, '')) LIKE ?
+      OR LOWER(COALESCE(frictions, '')) LIKE ?
+    )`;
     const like = `%${query}%`;
-    params.push(like, like);
+    params.push(like, like, like, like);
   }
 
   sql += ` ORDER BY created_at DESC`;
 
-  return getDb().prepare(sql).all(...params) as Submission[];
+  return (getDb().prepare(sql).all(...params) as SubmissionRow[]).map(
+    mapSubmission,
+  );
 }
 
 export function getSubmission(id: string): Submission | null {
   const row = getDb()
-    .prepare(
-      `SELECT id, worry_text, offering_text, category, created_at, is_claimed
-       FROM submissions
-       WHERE id = ?`,
-    )
-    .get(id) as Submission | undefined;
-  return row ?? null;
+    .prepare(`SELECT ${SELECT_COLS} FROM submissions WHERE id = ?`)
+    .get(id) as SubmissionRow | undefined;
+  return row ? mapSubmission(row) : null;
 }
 
 export function createSubmission(input: CreateSubmissionInput): Submission {
   const id = randomUUID();
   const created_at = new Date().toISOString();
+  const offering_text = (input.offering_text ?? "").trim();
+  const why_text = input.why_text?.trim() || null;
+  const frictions = input.frictions ?? [];
 
   getDb()
     .prepare(
-      `INSERT INTO submissions (id, worry_text, offering_text, category, created_at, is_claimed)
-       VALUES (?, ?, ?, ?, ?, 0)`,
+      `INSERT INTO submissions (
+        id, worry_text, offering_text, category, created_at, is_claimed,
+        prompt_type, fish_form, why_text, frictions
+      ) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
     )
     .run(
       id,
       input.worry_text.trim(),
-      input.offering_text.trim(),
+      offering_text,
       input.category,
       created_at,
+      input.prompt_type,
+      input.fish_form,
+      why_text,
+      JSON.stringify(frictions),
     );
 
   return {
     id,
     worry_text: input.worry_text.trim(),
-    offering_text: input.offering_text.trim(),
+    offering_text,
     category: input.category,
     created_at,
     is_claimed: 0,
+    prompt_type: input.prompt_type,
+    fish_form: input.fish_form,
+    why_text,
+    frictions,
   };
 }
 
@@ -180,40 +253,89 @@ export function createStewardshipAction(
   };
 }
 
+export function getExchangeSubmission(
+  excludeId?: string | null,
+  frictionId?: string | null,
+): Submission | null {
+  const db = getDb();
+
+  if (frictionId) {
+    const matched = (
+      db
+        .prepare(
+          `SELECT ${SELECT_COLS} FROM submissions
+           WHERE (? IS NULL OR id != ?)
+             AND frictions LIKE ?
+           ORDER BY RANDOM()
+           LIMIT 1`,
+        )
+        .all(
+          excludeId ?? null,
+          excludeId ?? null,
+          `%"id":"${frictionId}"%`,
+        ) as SubmissionRow[]
+    ).map(mapSubmission);
+    if (matched[0]) return matched[0];
+  }
+
+  const rows = (
+    db
+      .prepare(
+        `SELECT ${SELECT_COLS} FROM submissions
+         WHERE (? IS NULL OR id != ?)
+         ORDER BY RANDOM()
+         LIMIT 1`,
+      )
+      .all(excludeId ?? null, excludeId ?? null) as SubmissionRow[]
+  ).map(mapSubmission);
+
+  return rows[0] ?? null;
+}
+
 export function clearAll(): void {
   const db = getDb();
   db.exec(`DELETE FROM stewardship_actions; DELETE FROM submissions;`);
 }
 
-export function seedSubmission(data: {
-  worry_text: string;
-  offering_text: string;
-  category: Category;
-  created_at?: string;
-}): Submission {
+export function seedSubmission(
+  data: CreateSubmissionInput & { created_at?: string },
+): Submission {
   const id = randomUUID();
   const created_at = data.created_at ?? new Date().toISOString();
+  const offering_text = (data.offering_text ?? "").trim();
+  const why_text = data.why_text?.trim() || null;
+  const frictions = data.frictions ?? [];
 
   getDb()
     .prepare(
-      `INSERT INTO submissions (id, worry_text, offering_text, category, created_at, is_claimed)
-       VALUES (?, ?, ?, ?, ?, 0)`,
+      `INSERT INTO submissions (
+        id, worry_text, offering_text, category, created_at, is_claimed,
+        prompt_type, fish_form, why_text, frictions
+      ) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
     )
     .run(
       id,
       data.worry_text,
-      data.offering_text,
+      offering_text,
       data.category,
       created_at,
+      data.prompt_type,
+      data.fish_form,
+      why_text,
+      JSON.stringify(frictions),
     );
 
   return {
     id,
     worry_text: data.worry_text,
-    offering_text: data.offering_text,
+    offering_text,
     category: data.category,
     created_at,
     is_claimed: 0,
+    prompt_type: data.prompt_type,
+    fish_form: data.fish_form,
+    why_text,
+    frictions,
   };
 }
 

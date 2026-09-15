@@ -6,10 +6,12 @@ import {
   ACTION_TYPES,
   ACTION_TYPE_LABELS,
   CATEGORY_LABELS,
+  insightForFriction,
   type ActionType,
   type StewardshipAction,
   type Submission,
 } from "@/lib/types";
+import FishTextVessel from "@/components/onboarding/FishTextVessel";
 
 export default function StewardPage() {
   const params = useParams<{ id: string }>();
@@ -35,7 +37,7 @@ export default function StewardPage() {
 
       if (!subRes.ok) {
         setSubmission(null);
-        setError("This artifact could not be found.");
+        setError("This thought could not be found.");
         return;
       }
 
@@ -44,7 +46,7 @@ export default function StewardPage() {
         setActions((await actRes.json()) as StewardshipAction[]);
       }
     } catch {
-      setError("Could not load this burden.");
+      setError("Could not load this thought.");
     } finally {
       setLoading(false);
     }
@@ -89,63 +91,57 @@ export default function StewardPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-cream px-5 py-12 text-ink">
-        <p className="text-stone">Opening this burden…</p>
+      <main className="relative min-h-screen text-foam">
+        <div className="deep-dive-bg absolute inset-0" />
+        <p className="relative px-5 py-12 text-foam/70">Opening this thought…</p>
       </main>
     );
   }
 
   if (!submission) {
     return (
-      <main className="min-h-screen bg-cream px-5 py-12 text-ink">
-        <h1 className="font-serif text-3xl text-charcoal">Not found</h1>
-        <p className="mt-3 text-stone">{error}</p>
+      <main className="relative min-h-screen text-foam">
+        <div className="deep-dive-bg absolute inset-0" />
+        <div className="relative px-5 py-12">
+          <h1 className="font-serif text-3xl">Not found</h1>
+          <p className="mt-3 text-foam/65">{error}</p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="relative min-h-screen bg-cream text-ink">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 30% 0%, #ebe2d4 0%, transparent 50%), linear-gradient(180deg, #f3eee6, #e8e0d4)",
-        }}
-      />
+    <main className="relative min-h-screen text-foam">
+      <div className="deep-dive-bg pointer-events-none absolute inset-0" />
       <div className="relative mx-auto max-w-lg px-5 py-10 pb-20">
-        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-stone">
+        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-sand/70">
           Stewardship
         </p>
-        <h1 className="mt-3 font-serif text-3xl leading-tight text-charcoal">
-          You are holding someone&apos;s burden.
+        <h1 className="mt-3 font-serif text-3xl leading-tight">
+          You are holding someone&apos;s thought.
         </h1>
-        <p className="mt-3 text-stone">
-          Theme: {CATEGORY_LABELS[submission.category]}
-        </p>
 
-        <section className="mt-8 space-y-5 border-y border-charcoal/10 py-6">
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-stone">
-              Their worry
+        <div className="mt-8">
+          <FishTextVessel
+            form={submission.fish_form || "betta"}
+            text={submission.worry_text}
+            insight={insightForFriction(submission.frictions?.[0])}
+            size={300}
+          />
+          <p className="mt-4 text-center text-sm leading-relaxed text-sand/75">
+            {insightForFriction(submission.frictions?.[0])}
+          </p>
+          {submission.frictions?.[0] && (
+            <p className="mt-2 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-foam/40">
+              {submission.frictions[0].label} ·{" "}
+              {CATEGORY_LABELS[submission.category]}
             </p>
-            <p className="mt-2 font-serif text-xl leading-snug text-charcoal">
-              {submission.worry_text}
-            </p>
-          </div>
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-stone">
-              Their offering
-            </p>
-            <p className="mt-2 text-base leading-relaxed text-charcoal">
-              {submission.offering_text}
-            </p>
-          </div>
-        </section>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit} className="mt-8">
           <label className="block">
-            <span className="font-serif text-xl text-charcoal">
+            <span className="font-serif text-xl">
               What is one small step, conversation, or reflection you will do in
               solidarity?
             </span>
@@ -155,25 +151,25 @@ export default function StewardPage() {
               rows={4}
               required
               placeholder="One concrete act of care…"
-              className="mt-4 w-full resize-none rounded-sm border border-charcoal/15 bg-cream/80 px-4 py-3 text-base leading-relaxed text-ink placeholder:text-stone/60 focus:border-warm focus:outline-none"
+              className="mt-4 w-full resize-none rounded-2xl border border-foam/15 bg-depth/50 px-4 py-3 text-base leading-relaxed text-foam placeholder:text-foam/35 focus:border-sand/50 focus:outline-none"
             />
           </label>
-          <p className="mt-1 font-mono text-xs text-stone">
+          <p className="mt-1 font-mono text-xs text-foam/40">
             {response.length}/500
           </p>
 
           <fieldset className="mt-5">
-            <legend className="mb-2 text-sm text-stone">Kind of action</legend>
+            <legend className="mb-2 text-sm text-foam/60">Kind of action</legend>
             <div className="flex flex-wrap gap-2">
               {ACTION_TYPES.map((type) => (
                 <button
                   key={type}
                   type="button"
                   onClick={() => setActionType(type)}
-                  className={`min-h-11 rounded-sm border px-3 py-2 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm ${
+                  className={`min-h-11 rounded-full border px-3 py-2 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand ${
                     actionType === type
-                      ? "border-charcoal bg-charcoal text-cream"
-                      : "border-charcoal/20 text-charcoal"
+                      ? "border-sand bg-sand/20 text-sand"
+                      : "border-foam/20 text-foam/80"
                   }`}
                 >
                   {ACTION_TYPE_LABELS[type]}
@@ -183,12 +179,12 @@ export default function StewardPage() {
           </fieldset>
 
           {error && (
-            <p className="mt-4 text-sm text-red-800" role="alert">
+            <p className="mt-4 text-sm text-rose" role="alert">
               {error}
             </p>
           )}
           {done && (
-            <p className="mt-4 text-sm text-charcoal" role="status">
+            <p className="mt-4 text-sm text-sand" role="status">
               Thank you. Your care is now part of this lineage.
             </p>
           )}
@@ -196,32 +192,29 @@ export default function StewardPage() {
           <button
             type="submit"
             disabled={submitting || !response.trim()}
-            className="mt-6 min-h-12 w-full rounded-sm bg-charcoal px-5 py-3 text-cream transition hover:bg-ink disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+            className="mt-6 min-h-12 w-full rounded-full bg-sand px-5 py-3 text-navy transition hover:bg-glow disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-seafoam"
           >
             {submitting ? "Saving…" : "Log this act of care"}
           </button>
         </form>
 
         <section className="mt-12">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.22em] text-stone">
+          <h2 className="font-mono text-[11px] uppercase tracking-[0.22em] text-sand/70">
             Lineage of care
           </h2>
           {actions.length === 0 ? (
-            <p className="mt-4 text-stone">
+            <p className="mt-4 text-foam/60">
               No reflections yet. Yours could be the first.
             </p>
           ) : (
             <ul className="mt-4 space-y-4">
               {actions.map((action) => (
-                <li
-                  key={action.id}
-                  className="border-l border-charcoal/20 pl-4"
-                >
-                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-stone">
+                <li key={action.id} className="border-l border-foam/20 pl-4">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-foam/45">
                     {ACTION_TYPE_LABELS[action.action_type]} ·{" "}
                     {new Date(action.created_at).toLocaleString()}
                   </p>
-                  <p className="mt-1 leading-relaxed text-charcoal">
+                  <p className="mt-1 leading-relaxed text-foam/85">
                     {action.response_text}
                   </p>
                 </li>

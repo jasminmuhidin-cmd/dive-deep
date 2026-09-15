@@ -1,58 +1,95 @@
 import path from "path";
 import { clearAll, seedStewardship, seedSubmission } from "../lib/db";
+import type { CreateSubmissionInput } from "../lib/types";
 
-const samples = [
+const samples: CreateSubmissionInput[] = [
   {
     worry_text:
       "I keep scrolling past climate headlines until they feel like white noise.",
-    offering_text:
-      "I can name one local green space I care about and visit it this week.",
-    category: "environment" as const,
+    category: "environment",
+    prompt_type: "worry",
+    fish_form: "seahorse",
+    why_text: "Because the silence after the headlines feels heavier than the news.",
+    frictions: [
+      { id: "overwhelming", label: "It gets overwhelming" },
+      { id: "dont_know_what_to_do", label: "I don't know what I could do" },
+    ],
   },
   {
     worry_text: "My neighbourhood feels quieter and more fragmented than before.",
-    offering_text: "I will greet one neighbour I usually walk past.",
-    category: "community" as const,
+    category: "community",
+    prompt_type: "care",
+    fish_form: "turtle",
+    why_text: null,
+    frictions: [{ id: "distant", label: "It feels distant from my life" }],
   },
   {
-    worry_text: "I worry the future is already decided without people like me.",
-    offering_text: "I can share one hopeful story with a friend this week.",
-    category: "future" as const,
+    worry_text: "I wish I understood how young people still find hope about the future.",
+    category: "future",
+    prompt_type: "curiosity",
+    fish_form: "angelfish",
+    frictions: [
+      { id: "dont_know_enough", label: "I don't know enough" },
+      { id: "too_big", label: "It feels too big" },
+    ],
   },
   {
-    worry_text: "I feel invisible in rooms where everyone seems to belong.",
-    offering_text: "I will check in on someone who might feel the same.",
-    category: "belonging" as const,
+    worry_text: "I wish more people understood how lonely belonging can feel in a crowded room.",
+    category: "belonging",
+    prompt_type: "voice",
+    fish_form: "betta",
+    frictions: [
+      { id: "unsafe", label: "It can feel unsafe to talk about" },
+    ],
   },
   {
     worry_text: "Rent and bills leave little room to care about anything else.",
-    offering_text: "I can swap one resource tip with someone under pressure.",
-    category: "economy" as const,
+    category: "economy",
+    prompt_type: "worry",
+    fish_form: "seahorse",
+    frictions: [
+      { id: "no_capacity", label: "I don't have the capacity right now" },
+      { id: "too_big", label: "It feels too big" },
+    ],
   },
   {
     worry_text: "Caring about everything online leaves me numb by afternoon.",
-    offering_text: "I will choose one issue and give it twenty quiet minutes.",
-    category: "community" as const,
+    category: "community",
+    prompt_type: "care",
+    fish_form: "turtle",
+    frictions: [{ id: "overwhelming", label: "It gets overwhelming" }],
   },
   {
     worry_text: "I fear rivers and reefs are becoming background decoration.",
-    offering_text: "I can pick up litter on one familiar stretch of path.",
-    category: "environment" as const,
+    category: "environment",
+    prompt_type: "voice",
+    fish_form: "betta",
+    frictions: [{ id: "distant", label: "It feels distant from my life" }],
   },
   {
-    worry_text: "Younger cousins ask about the future and I freeze.",
-    offering_text: "I will answer honestly and ask what they hope for too.",
-    category: "future" as const,
+    worry_text: "Something I wish I understood better is how change actually starts locally.",
+    category: "future",
+    prompt_type: "curiosity",
+    fish_form: "angelfish",
+    frictions: [
+      { id: "dont_know_what_to_do", label: "I don't know what I could do" },
+    ],
   },
   {
     worry_text: "Group chats go silent when hard news appears.",
-    offering_text: "I can start one gentle conversation instead of leaving.",
-    category: "belonging" as const,
+    category: "belonging",
+    prompt_type: "worry",
+    fish_form: "seahorse",
+    frictions: [{ id: "unsafe", label: "It can feel unsafe to talk about" }],
   },
   {
     worry_text: "Work asks for more while community needs more too.",
-    offering_text: "I will protect one evening for someone else's need.",
-    category: "economy" as const,
+    category: "economy",
+    prompt_type: "care",
+    fish_form: "turtle",
+    frictions: [
+      { id: "no_capacity", label: "I don't have the capacity right now" },
+    ],
   },
 ];
 

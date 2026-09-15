@@ -10,6 +10,7 @@ import {
   type Category,
   type Submission,
 } from "@/lib/types";
+import FishArtefact from "@/components/onboarding/FishArtefact";
 
 const TILE_TONES: Record<Category, { bg: string; ink: string; soft: string }> = {
   environment: { bg: "#5f735c", ink: "#f3eee6", soft: "#d5e0d3" },
@@ -204,38 +205,55 @@ export default function GalleryView() {
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className="absolute right-4 top-4 rounded-sm p-2 text-warm-soft/70 transition hover:bg-warm-soft/10 hover:text-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+                className="absolute right-4 top-4 z-10 rounded-sm p-2 text-warm-soft/70 transition hover:bg-warm-soft/10 hover:text-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
 
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-warm-soft/60">
-                {CATEGORY_LABELS[selected.category]}
-              </p>
-              <h2
-                id="gallery-detail-title"
-                className="mt-3 pr-10 font-serif text-3xl leading-snug"
-              >
-                {selected.worry_text}
-              </h2>
-              <div className="mt-8 border-t border-warm-soft/15 pt-6">
-                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-warm-soft/55">
-                  Offering
-                </p>
-                <p className="mt-2 text-lg leading-relaxed text-warm-soft/90">
-                  {selected.offering_text}
-                </p>
-              </div>
+              {selected.fish_form && selected.prompt_type ? (
+                <div className="pr-8">
+                  <FishArtefact
+                    fishForm={selected.fish_form}
+                    promptType={selected.prompt_type}
+                    thought={selected.worry_text}
+                    whyText={selected.why_text}
+                    frictions={selected.frictions}
+                    category={selected.category}
+                  />
+                </div>
+              ) : (
+                <>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-warm-soft/60">
+                    {CATEGORY_LABELS[selected.category]}
+                  </p>
+                  <h2
+                    id="gallery-detail-title"
+                    className="mt-3 pr-10 font-serif text-3xl leading-snug"
+                  >
+                    {selected.worry_text}
+                  </h2>
+                  {selected.offering_text ? (
+                    <div className="mt-8 border-t border-warm-soft/15 pt-6">
+                      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-warm-soft/55">
+                        Offering
+                      </p>
+                      <p className="mt-2 text-lg leading-relaxed text-warm-soft/90">
+                        {selected.offering_text}
+                      </p>
+                    </div>
+                  ) : null}
+                </>
+              )}
               <p className="mt-6 font-mono text-xs text-warm-soft/45">
                 Released {new Date(selected.created_at).toLocaleString()}
                 {selected.is_claimed ? " · someone has stewarded this" : ""}
               </p>
               <Link
                 href={`/steward/${selected.id}`}
-                className="mt-8 inline-flex min-h-12 items-center rounded-sm bg-cream px-5 py-3 text-charcoal transition hover:bg-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+                className="mt-8 inline-flex min-h-12 items-center rounded-full bg-sand px-5 py-3 text-navy transition hover:bg-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-seafoam"
               >
-                Steward this burden
+                Steward this thought
               </Link>
             </motion.article>
           </motion.div>
