@@ -1,12 +1,6 @@
 # deep dive
 
-Interactive installation: Next.js kiosk + archive, dive-deep-7 Electron water projection.
-
-## Live site
-
-Public URL: **https://dive-deep.vercel.app**  
-Receipt QR codes and the Electron kiosk bridge default to this host.  
-For local API testing: `window.__KIOSK_API__ = 'http://localhost:3000'` in Electron DevTools.
+Interactive installation MVP for initial user testing — swipeable onboarding prompts, sea-creature artefacts, live projection wall, searchable archive, and stewardship via QR.
 
 ## Quick start
 
@@ -18,8 +12,26 @@ npm run seed
 npm run dev
 ```
 
-Open http://localhost:3000/kiosk and http://localhost:3000/gallery  
-(or the live site at https://dive-deep.vercel.app)
+Open [http://localhost:3000](http://localhost:3000).
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Testing hub |
+| `/kiosk` | Deep dive onboarding (prompt cards → fish → friction → release) |
+| `/gallery` | Searchable archive of all submissions |
+| `/projection` | Live constellation wall (second screen) |
+| `/steward/[id]` | Mobile stewardship via QR |
+
+### Prompt → creature
+
+| Prompt | Creature |
+|--------|----------|
+| Care | Turtle |
+| Worry | Seahorse |
+| Curiosity | Angelfish |
+| Voice | Betta |
+
+## Phone / QR testing
 
 **Terminal 2 — projection**
 
@@ -38,4 +50,7 @@ Send a ripple from the kiosk; it enters the water with the Thought entry animati
 3. Composites onto `dive-deep-7/assets/branding/receipt.png`  
 4. Saves PNG to `dive-deep-7/data/prints/` and attempts system print  
 
-WalkPrint app remains a fallback if the OS cannot talk to the device directly.
+- Data is stored in local SQLite at `data/shared-burdens.db`
+- Branding references live in `public/branding/`
+- Thermal printing is stubbed; use on-screen receipt or browser print
+- Re-run `npm run seed` anytime to reset demo content

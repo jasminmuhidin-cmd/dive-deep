@@ -11,6 +11,7 @@ import {
   type Submission,
   type ThoughtResponse,
 } from "@/lib/types";
+import FishArtefact from "@/components/onboarding/FishArtefact";
 
 export default function GalleryView() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -269,61 +270,56 @@ export default function GalleryView() {
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className="absolute right-4 top-4 rounded-full p-2 text-mist hover:bg-ocean-deep/40"
+                className="absolute right-4 top-4 z-10 rounded-sm p-2 text-warm-soft/70 transition hover:bg-warm-soft/10 hover:text-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mist/60">
-                {selected.anonymous_code} ·{" "}
-                {CATEGORY_LABELS[selected.category] || selected.theme}
-              </p>
-              <h2 className="mt-3 pr-10 font-serif text-3xl leading-snug">
-                {selected.worry_text}
-              </h2>
-              <p className="mt-4 text-sm text-mist">
-                Uncovered by {selected.uncover_count}{" "}
-                {selected.uncover_count === 1 ? "person" : "people"}
-              </p>
 
-              <section className="mt-8 border-t border-ripple/20 pt-6">
-                <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-mist/60">
-                  Responses
-                </h3>
-                {responses.length === 0 ? (
-                  <p className="mt-3 text-sm text-mist/60">
-                    No responses yet. Leave one if this stays with you.
+              {selected.fish_form && selected.prompt_type ? (
+                <div className="pr-8">
+                  <FishArtefact
+                    fishForm={selected.fish_form}
+                    promptType={selected.prompt_type}
+                    thought={selected.worry_text}
+                    whyText={selected.why_text}
+                    frictions={selected.frictions}
+                    category={selected.category}
+                  />
+                </div>
+              ) : (
+                <>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-warm-soft/60">
+                    {CATEGORY_LABELS[selected.category]}
                   </p>
-                ) : (
-                  <ul className="mt-3 space-y-3">
-                    {responses.map((r) => (
-                      <li
-                        key={r.id}
-                        className="border-l border-ripple/30 pl-3 text-sm leading-relaxed text-foam/90"
-                      >
-                        {r.response_text}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <textarea
-                  value={responseText}
-                  onChange={(e) =>
-                    setResponseText(e.target.value.slice(0, 500))
-                  }
-                  rows={3}
-                  placeholder="Share a response…"
-                  className="mt-4 w-full resize-none rounded-2xl border border-ripple/25 bg-ocean-deep/50 px-4 py-3 text-sm text-foam placeholder:text-mist/40 focus:border-ripple/50 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  disabled={!responseText.trim() || posting}
-                  onClick={postResponse}
-                  className="mt-3 min-h-11 rounded-full bg-ripple px-5 py-2 text-sm text-ocean-deep disabled:opacity-40"
-                >
-                  {posting ? "Sending…" : "Share response"}
-                </button>
-              </section>
+                  <h2
+                    id="gallery-detail-title"
+                    className="mt-3 pr-10 font-serif text-3xl leading-snug"
+                  >
+                    {selected.worry_text}
+                  </h2>
+                  {selected.offering_text ? (
+                    <div className="mt-8 border-t border-warm-soft/15 pt-6">
+                      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-warm-soft/55">
+                        Offering
+                      </p>
+                      <p className="mt-2 text-lg leading-relaxed text-warm-soft/90">
+                        {selected.offering_text}
+                      </p>
+                    </div>
+                  ) : null}
+                </>
+              )}
+              <p className="mt-6 font-mono text-xs text-warm-soft/45">
+                Released {new Date(selected.created_at).toLocaleString()}
+                {selected.is_claimed ? " · someone has stewarded this" : ""}
+              </p>
+              <Link
+                href={`/steward/${selected.id}`}
+                className="mt-8 inline-flex min-h-12 items-center rounded-full bg-sand px-5 py-3 text-navy transition hover:bg-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-seafoam"
+              >
+                Steward this thought
+              </Link>
             </motion.article>
           </motion.div>
         )}

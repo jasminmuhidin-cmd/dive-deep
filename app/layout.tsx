@@ -22,7 +22,7 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "deep dive",
   description:
-    "A quiet weight shared in water — kiosk, collective projection, and archive.",
+    "Don't just skim the surface. Find what anchors you — an interactive installation about care, friction, and collective action.",
 };
 
 export default function RootLayout({

@@ -1,90 +1,62 @@
 @import "tailwindcss";
 
 :root {
-  --ocean-deep: #071820;
-  --ocean-mid: #0c2a38;
-  --ocean-teal: #1a5f6e;
-  --ocean-light: #3d8b9c;
-  --foam: #d8eef2;
-  --mist: #a8cdd6;
-  --ripple: #5eb0c0;
-  --ink: #e8f4f6;
-  --background: var(--ocean-deep);
-  --foreground: var(--ink);
+  --sand: #e9d68c;
+  --rose: #c6979d;
+  --seafoam: #4b908d;
+  --cerulean: #147a90;
+  --navy: #2d3651;
+  --depth: #1a2033;
+  --ink: #121826;
+  --foam: #f4efe4;
+  --glow: #f0e8d0;
 
-  /* legacy aliases */
+  /* legacy aliases used by gallery/projection until full rebrand */
   --cream: var(--foam);
-  --charcoal: var(--ocean-mid);
-  --stone: var(--mist);
-  --warm: var(--ripple);
-  --warm-soft: var(--mist);
-  --glow: var(--foam);
-  --navy: var(--ocean-deep);
-  --sand: var(--foam);
-  --depth: var(--ocean-mid);
-  --seafoam: var(--ocean-teal);
-  --cerulean: var(--ocean-light);
-  --rose: #7a9eab;
+  --cream-deep: #d9cfc0;
+  --stone: #8a9aa8;
+  --charcoal: var(--navy);
+  --warm: var(--rose);
+  --warm-soft: var(--sand);
+  --background: var(--navy);
+  --foreground: var(--foam);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-ocean-deep: var(--ocean-deep);
-  --color-ocean-mid: var(--ocean-mid);
-  --color-ocean-teal: var(--ocean-teal);
-  --color-ocean-light: var(--ocean-light);
-  --color-foam: var(--foam);
-  --color-mist: var(--mist);
-  --color-ripple: var(--ripple);
-  --color-ink: var(--ink);
-  --color-cream: var(--cream);
-  --color-charcoal: var(--charcoal);
-  --color-stone: var(--stone);
-  --color-warm: var(--warm);
-  --color-warm-soft: var(--warm-soft);
-  --color-glow: var(--glow);
-  --color-navy: var(--navy);
   --color-sand: var(--sand);
-  --color-depth: var(--depth);
+  --color-rose: var(--rose);
   --color-seafoam: var(--seafoam);
   --color-cerulean: var(--cerulean);
-  --color-rose: var(--rose);
+  --color-navy: var(--navy);
+  --color-depth: var(--depth);
+  --color-ink: var(--ink);
+  --color-foam: var(--foam);
+  --color-glow: var(--glow);
+  --color-cream: var(--cream);
+  --color-charcoal: var(--charcoal);
+  --color-warm: var(--warm);
+  --color-warm-soft: var(--warm-soft);
   --font-sans: var(--font-body);
   --font-serif: var(--font-display);
   --font-mono: var(--font-mono);
 }
 
 body {
-  background: var(--ocean-deep);
-  color: var(--ink);
+  background: var(--navy);
+  color: var(--foam);
   font-family: var(--font-body), system-ui, sans-serif;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--ocean-light) 45%, transparent);
+  background: color-mix(in srgb, var(--seafoam) 45%, transparent);
 }
 
-.ocean-bg {
+.deep-dive-bg {
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(61, 139, 156, 0.28), transparent 45%),
-    radial-gradient(ellipse at 70% 80%, rgba(26, 95, 110, 0.35), transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(12, 42, 56, 0.5), transparent 70%),
-    linear-gradient(165deg, #071820 0%, #0c2a38 45%, #081c28 100%);
-}
-
-.ocean-ripple-pulse {
-  animation: oceanPulse 8s ease-in-out infinite;
-}
-
-@keyframes oceanPulse {
-  0%,
-  100% {
-    opacity: 0.35;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.55;
-    transform: scale(1.04);
-  }
+    radial-gradient(ellipse at 20% 10%, rgba(233, 214, 140, 0.22), transparent 42%),
+    radial-gradient(ellipse at 80% 20%, rgba(198, 151, 157, 0.18), transparent 40%),
+    radial-gradient(ellipse at 50% 90%, rgba(20, 122, 144, 0.35), transparent 50%),
+    linear-gradient(165deg, #2d3651 0%, #1a2033 55%, #121826 100%);
 }
