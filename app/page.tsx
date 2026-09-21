@@ -2,46 +2,47 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-cream text-ink">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-70"
-        style={{
-          background:
-            "radial-gradient(ellipse at 20% 10%, #e8dcc8 0%, transparent 50%), radial-gradient(ellipse at 80% 90%, #d9cbb8 0%, transparent 45%), linear-gradient(160deg, #f3eee6 0%, #ebe4d8 100%)",
-        }}
-      />
+    <main className="relative min-h-screen overflow-hidden text-ink">
+      <div className="ocean-bg pointer-events-none absolute inset-0" />
       <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-stone">
-          Installation testing hub
+        <p className="font-mono text-xs uppercase tracking-[0.25em] text-mist/70">
+          Installation hub
         </p>
-        <h1 className="mt-4 font-serif text-5xl leading-tight tracking-tight text-charcoal md:text-6xl">
-          Shared Burdens
+        <h1 className="mt-4 font-serif text-5xl leading-tight tracking-tight text-foam md:text-6xl">
+          deep dive
         </h1>
-        <p className="mt-5 max-w-xl text-lg leading-relaxed text-stone">
-          Open the kiosk to leave a worry and an offering. Keep the projection
-          visible on a second screen. Scan a receipt QR to steward someone
-          else&apos;s burden.
+        <div
+          className="mt-3 h-1.5 w-28 rounded-full"
+          style={{ background: "linear-gradient(90deg, #1a5f6e, #5eb0c0)" }}
+          aria-hidden
+        />
+        <p className="mt-5 max-w-xl text-lg leading-relaxed text-mist">
+          Send a quiet weight from the kiosk. Watch it enter the water on the
+          projection (dive-deep-7). Browse what we&apos;ve been carrying in the
+          archive.
         </p>
         <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
           <Link
             href="/kiosk"
-            className="rounded-sm bg-charcoal px-6 py-4 text-center text-cream transition hover:bg-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+            className="rounded-full bg-ripple px-6 py-4 text-center text-ocean-deep transition hover:bg-foam focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foam"
           >
             Open kiosk
           </Link>
           <Link
             href="/gallery"
-            className="rounded-sm border border-charcoal/20 bg-cream/60 px-6 py-4 text-center text-charcoal transition hover:border-charcoal/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+            className="rounded-full border border-ripple/30 px-6 py-4 text-center text-foam transition hover:border-foam/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ripple"
           >
-            Browse archive
-          </Link>
-          <Link
-            href="/projection"
-            className="rounded-sm border border-charcoal/20 bg-cream/60 px-6 py-4 text-center text-charcoal transition hover:border-charcoal/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
-          >
-            Open projection
+            Archive
           </Link>
         </div>
+        <p className="mt-10 max-w-md font-mono text-xs leading-relaxed text-mist/50">
+          Projection: run{" "}
+          <code className="text-mist/80">cd dive-deep-7 && npm start</code> —
+          it listens for kiosk ripples at{" "}
+          <code className="text-mist/80">https://dive-deep.vercel.app</code>{" "}
+          (or set{" "}
+          <code className="text-mist/80">window.__KIOSK_API__</code> for local).
+        </p>
       </div>
     </main>
   );

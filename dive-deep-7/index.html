@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Thought Water</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://dive-deep.vercel.app http://localhost:3000 http://127.0.0.1:3000">
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #08161f; }
+    body { user-select: none; -webkit-user-select: none; touch-action: none; }
+    body.installation { cursor: none; }
+    canvas { display: block; touch-action: none; }
+
+    /* ---- The Thought control: a quiet half-ripple rising from the left edge of the water ---- */
+    #thought-button {
+      --d: clamp(124px, 10vw, 184px);           /* diameter of the ripple the control is a slice of */
+      position: fixed; left: 0; top: 50%; transform: translateY(-50%);
+      width: calc(var(--d) / 2); height: var(--d);
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 0 0 4px; border: 0; background: none; outline: none;
+      font: italic 400 clamp(15px, 1.25vw, 20px) "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      letter-spacing: 0.02em; color: rgba(228, 241, 248, 0.8);
+      text-shadow: 0 0 8px rgba(2, 12, 22, 0.7);
+      cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      z-index: 5; transition: color .5s ease;
+    }
+    #thought-button::before, #thought-button::after {
+      content: ""; position: absolute; left: calc(var(--d) / -2); top: 0; width: var(--d); height: var(--d);
+      border-radius: 50%; pointer-events: none;
+    }
+    #thought-button::before {                   /* the resting ripple: soft disc + two faint rings, breathing slowly */
+      background: radial-gradient(circle, rgba(150, 200, 224, .20) 0%, rgba(150, 200, 224, .08) 52%, rgba(150, 200, 224, 0) 70%);
+      border: 1px solid rgba(190, 222, 236, .34);
+      box-shadow: 0 0 0 clamp(9px, .9vw, 15px) rgba(190, 222, 236, .07), 0 0 0 clamp(20px, 2vw, 32px) rgba(190, 222, 236, .035);
+      animation: tb-breathe 7s ease-in-out infinite;
+    }
+    #thought-button::after {                    /* on press: one ring leaves the control, like a drop */
+      border: 1px solid rgba(214, 236, 246, .55); opacity: 0;
+    }
+    #thought-button.pressed::after { animation: tb-press 1.9s cubic-bezier(.2, .6, .3, 1) 1; }
+    /* on press the current visibly leaves the control: a soft streak runs out from its edge as the wave enters the water */
+    .tb-stream {
+      position: absolute; left: calc(100% - 2px); top: 50%; width: clamp(160px, 14vw, 280px); height: 26px; margin-top: -13px;
+      pointer-events: none; opacity: 0; transform-origin: 0 50%;
+      background: radial-gradient(ellipse 100% 50% at 0% 50%, rgba(240, 246, 236, .55) 0%, rgba(200, 228, 244, .22) 45%, rgba(200, 228, 244, 0) 100%);
+      filter: blur(2px);
+    }
+    #thought-button.pressed .tb-stream { animation: tb-stream 2.4s cubic-bezier(.25, .55, .3, 1) 1; }
+    #thought-button.pressed::before { border-color: rgba(236, 248, 255, .7); transition: border-color .2s ease; }
+    @keyframes tb-stream { 0% { opacity: 0; transform: scaleX(.15); } 22% { opacity: .95; } 100% { opacity: 0; transform: scaleX(1.5) translateX(20px); } }
+    #thought-button:hover, #thought-button:focus-visible { color: rgba(244, 250, 253, 0.98); }
+    #thought-button:focus-visible::before { border-color: rgba(240, 250, 255, .8); }
+    .tb-label { position: relative; }
+    @keyframes tb-breathe { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.045); opacity: 1; } }
+    @keyframes tb-press { 0% { transform: scale(.85); opacity: .7; } 100% { transform: scale(2.1); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { #thought-button::before { animation: none; } }
+    body.installation #thought-button { cursor: none; }
+
+  </style>
+</head>
+<body>
+  <canvas id="stage"></canvas>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

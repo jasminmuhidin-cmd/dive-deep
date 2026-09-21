@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { APP_URL } from "@/lib/config";
 import { getSubmission } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -20,10 +21,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ||
-      "http://localhost:3000";
-
     const receipt = {
       title: "Collective Efficacy & Shared Burdens",
       submission_id: submission.id,
@@ -31,7 +28,7 @@ export async function POST(request: Request) {
       worry_text: submission.worry_text,
       offering_text: submission.offering_text,
       category: submission.category,
-      steward_url: `${baseUrl}/steward/${submission.id}`,
+      steward_url: `${APP_URL}/steward/${submission.id}`,
       footer:
         "Keep, trade, or gift this artifact. Someone else may carry it forward.",
       printed: false,

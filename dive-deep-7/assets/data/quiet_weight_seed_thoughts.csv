@@ -1,0 +1,101 @@
+﻿thought_id,response,theme,feeling_tag,connection_group
+T001,I worry that people are getting used to seeing suffering every day and it is becoming easier to scroll past it.,media & global crises,overwhelmed,numbness
+T002,"The climate feels like this huge thing hanging over everything, even on normal days when no one is talking about it.",climate & environment,anxious,future uncertainty
+T003,I think about how hard it is for people my age to imagine ever owning a home.,housing & cost of living,uncertain,future uncertainty
+T004,There is so much happening in the world that I never feel like I know enough to have the right opinion.,information & misinformation,uncertain,not knowing enough
+T005,I worry that we are becoming less patient with each other and quicker to decide someone is a bad person.,social division,sad,disconnection
+T006,Sometimes I feel guilty for having a normal day when I know other people are living through war.,war & conflict,guilty,distance from suffering
+T007,I am scared that AI will change work faster than people can actually adapt to it.,technology & AI,anxious,future uncertainty
+T008,It feels like everything is getting more expensive except people's time and labour.,cost of living & work,frustrated,system pressure
+T009,"I worry that loneliness is becoming normal, especially when everyone looks connected online.",community & loneliness,sad,disconnection
+T010,I think about how many people are exhausted just trying to stay afloat and do not have energy left to care about bigger issues.,cost of living & participation,overwhelmed,capacity
+T011,The amount of hate people can casually post online scares me.,online culture & safety,scared,social hostility
+T012,I worry that we only pay attention to disasters while they are trending.,media & global crises,frustrated,attention
+T013,I am scared that extreme weather will just become something we learn to accept.,climate & environment,scared,normalisation
+T014,Sometimes I wonder whether anything I do actually matters when the problems are this big.,civic participation,powerless,scale mismatch
+T015,I worry about kids growing up online before they really know who they are.,technology & childhood,concerned,technology pressure
+T016,I carry this feeling that the future is less secure than the one our parents were promised.,future & security,uncertain,future uncertainty
+T017,"It bothers me that someone's postcode can shape so much of their access to safety, education and opportunity.",inequality,frustrated,system inequality
+T018,I worry that we are losing the ability to tell what is real online.,misinformation & AI,uneasy,trust
+T019,"I think about Palestine a lot, but sometimes I avoid the news because I feel helpless afterwards.",war & conflict,overwhelmed,distance from suffering
+T020,It scares me how quickly people can become a statistic instead of a person.,war & humanitarian crises,sad,dehumanisation
+T021,I worry about my parents getting older while life keeps getting busier.,family & time,sad,time pressure
+T022,I am worried that people are working harder just to maintain the same quality of life.,cost of living & work,tired,system pressure
+T023,I think a lot about how much waste we create without ever seeing where it ends up.,waste & environment,concerned,hidden consequences
+T024,I worry that caring about everything eventually makes you feel like you can care about nothing.,emotional overload,overwhelmed,capacity
+T025,Sometimes social media makes the world feel much more hostile than the people I actually meet.,social media & perception,uneasy,disconnection
+T026,I worry that people have to prove they are suffering enough before they receive help.,health & social support,frustrated,system inequality
+T027,There are whole conflicts happening that barely enter our news unless something dramatic happens.,media & global crises,concerned,attention
+T028,I worry about how normal surveillance is becoming because convenience usually wins.,privacy & technology,uneasy,trust
+T029,I feel like people are expected to turn every belief into a public statement now.,online culture & identity,pressured,social judgement
+T030,I worry that being constantly reachable means nobody really gets to switch off anymore.,technology & wellbeing,tired,capacity
+T031,"I think about how many people quietly choose between food, rent and medication.",cost of living & inequality,sad,system inequality
+T032,"I worry that empathy is easier when a story is simple, but most people's lives are not.",empathy & social division,reflective,complexity
+T033,I am scared of how quickly misinformation can turn into real harm.,misinformation,scared,trust
+T034,I worry that our attention is being treated like something companies can endlessly extract.,technology & attention,frustrated,attention
+T035,It feels strange that we can see almost every tragedy in real time but still feel so far away from it.,media & global crises,powerless,distance from suffering
+T036,I worry that people who are already vulnerable will be hit hardest by climate change.,climate & inequality,concerned,system inequality
+T037,I wonder how many people feel like they have to stay quiet because they are scared of saying the wrong thing.,social judgement,scared,social judgement
+T038,I worry that we are forgetting how to disagree without humiliating each other.,social division,sad,social hostility
+T039,I am worried that burnout is becoming something we treat as normal adulthood.,work & wellbeing,tired,capacity
+T040,I think about how hard it is to plan a future when rent keeps rising.,housing & cost of living,anxious,future uncertainty
+T041,I worry that environmental problems are always framed as individual choices when so much depends on systems.,climate & systems,frustrated,system pressure
+T042,Sometimes I avoid learning more because I know I will feel responsible but still not know what to do.,civic participation,guilty,not knowing what to do
+T043,I worry about communities losing places where people can just exist together without having to buy something.,community & public space,sad,disconnection
+T044,The idea that someone's whole life can be changed by a border they did not choose stays with me.,migration & displacement,sad,system inequality
+T045,"I worry that people are becoming suspicious of every image, video and story they see.",AI & misinformation,uneasy,trust
+T046,Sometimes I think the hardest part is not knowing which problems deserve my attention first.,emotional overload,overwhelmed,attention
+T047,I worry that young people are expected to fix problems we did not create while also just trying to survive.,generational pressure,frustrated,system pressure
+T048,I think about how invisible disability can be until a system makes someone's life harder.,accessibility & disability,concerned,system inequality
+T049,I worry that community only becomes visible after something terrible happens.,community,sad,disconnection
+T050,I am scared that people can become radicalised while thinking they are simply learning more about the world.,online culture & extremism,scared,trust
+T051,I worry that there are fewer spaces where people feel safe admitting they do not know something.,education & dialogue,uncertain,not knowing enough
+T052,It weighs on me that people can work full time and still not feel financially secure.,cost of living & work,frustrated,system pressure
+T053,I worry that people only get heard when they make their pain public.,media & visibility,sad,attention
+T054,I feel uneasy about how much of daily life depends on companies we know very little about.,technology & power,uneasy,trust
+T055,"I worry that once a crisis stops being new, people assume it has stopped happening.",media & global crises,frustrated,attention
+T056,I think about how much pressure there is to look like you are coping even when you are not.,wellbeing & social pressure,tired,social judgement
+T057,I worry that the natural places I love will look completely different within my lifetime.,climate & environment,grieving,loss
+T058,Sometimes I feel like I am watching the world change faster than I can make sense of it.,future & technology,overwhelmed,future uncertainty
+T059,I worry that people are becoming more isolated from neighbours and local community.,community & loneliness,sad,disconnection
+T060,It worries me that the people most affected by decisions often have the least power in making them.,inequality & governance,frustrated,system inequality
+T061,I think about how easy it is to care privately but how intimidating it can feel to act publicly.,civic participation,scared,social judgement
+T062,I worry that compassion can turn into guilt when you cannot help everyone.,emotional overload,guilty,capacity
+T063,I am worried about how much plastic and rubbish moves through places we never see.,waste & environment,concerned,hidden consequences
+T064,I worry that people are losing trust in institutions but have nowhere else trustworthy to turn.,institutions & trust,uneasy,trust
+T065,It scares me that a person's safety can depend on whether strangers see them as human.,discrimination & violence,scared,dehumanisation
+T066,I worry that we are becoming better at documenting injustice than actually changing the conditions behind it.,civic participation,frustrated,scale mismatch
+T067,I think about people who have had to leave home and do not know if they will ever return.,migration & displacement,sad,loss
+T068,I worry that constant bad news makes hope feel naive.,media & wellbeing,tired,capacity
+T069,Sometimes the world feels so loud that I do not know what my own values are anymore.,identity & media,uncertain,attention
+T070,I worry that technology keeps promising connection while making attention harder to give.,technology & relationships,reflective,attention
+T071,I think about how many people hide financial stress because everyone else seems fine.,cost of living,anxious,social judgement
+T072,I worry that we will keep reacting to climate disasters instead of preparing for them properly.,climate & governance,frustrated,system pressure
+T073,It bothers me that caring can sometimes feel performative even when the care is genuine.,activism & social media,uneasy,social judgement
+T074,I worry that fear of being judged stops people from asking questions that might actually help them understand.,dialogue & learning,scared,not knowing enough
+T075,I think about people working jobs that keep society running but still being treated as replaceable.,work & inequality,frustrated,system inequality
+T076,I worry that our memories of big events are becoming shaped by whatever content gets shown to us most.,media & algorithms,uneasy,trust
+T077,Sometimes I feel guilty that my ability to care depends on how tired I am that day.,emotional overload,guilty,capacity
+T078,I worry that we are so focused on being productive that rest has started to feel undeserved.,work & wellbeing,tired,system pressure
+T079,I think about people living through disasters who disappear from public attention once the cameras leave.,humanitarian crises,sad,attention
+T080,I worry that we are making decisions about AI before we really understand what we are giving up.,technology & AI,uneasy,future uncertainty
+T081,It weighs on me that some people have to be incredibly resilient just to access things others take for granted.,inequality & accessibility,sad,system inequality
+T082,I worry about how quickly a joke online can turn into a pile-on against a real person.,online culture & safety,uneasy,social hostility
+T083,I think about how much knowledge and culture can disappear when communities are displaced.,culture & displacement,grieving,loss
+T084,I worry that the world rewards certainty even when the most honest answer is 'I don't know yet.',dialogue & uncertainty,uncertain,not knowing enough
+T085,"Sometimes I feel hopeful when people come together, and then scared by how quickly that energy can disappear.",collective action,hopeful,collective efficacy
+T086,I worry that people who need support most are often expected to navigate the hardest systems.,social support & access,frustrated,system inequality
+T087,I think about whether future generations will be angry that we knew what was happening and still moved so slowly.,climate & future,guilty,future uncertainty
+T088,I worry that being informed has started to feel like being permanently distressed.,media & wellbeing,overwhelmed,capacity
+T089,I am scared that people are getting used to cruelty as entertainment.,online culture & media,scared,dehumanisation
+T090,I worry that we do not notice what is disappearing until it is already gone.,environment & culture,grieving,loss
+T091,Sometimes I just want to know there is one small useful thing I can actually do.,civic participation,hopeful,not knowing what to do
+T092,I worry that political issues are becoming so tied to identity that changing your mind feels like betrayal.,politics & social division,uneasy,social hostility
+T093,I think about how much easier it is to blame individuals than repair broken systems.,systems & inequality,frustrated,system pressure
+T094,I worry that people are being asked to absorb more grief than humans were ever meant to see in one day.,media & global crises,overwhelmed,capacity
+T095,It scares me that people can lose everything because of events happening far beyond their control.,"war, climate & displacement",scared,future uncertainty
+T096,"I worry about people becoming numb, including myself.",emotional overload,uneasy,numbness
+T097,I think about how many small acts of care happen every day and never become part of the story we tell about the world.,community & care,hopeful,collective efficacy
+T098,I worry that we hear so much about what is broken that we forget people are also constantly trying to repair things.,community & change,hopeful,collective efficacy
+T099,I carry a quiet fear that the future will ask more from us while giving us less room to breathe.,future & wellbeing,anxious,capacity
+T100,I worry that I will get so used to feeling powerless that I stop looking for ways to help.,civic participation,powerless,scale mismatch

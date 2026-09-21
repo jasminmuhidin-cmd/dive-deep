@@ -1,17 +1,30 @@
 import { NextResponse } from "next/server";
-import { getSubmission } from "@/lib/db";
+import { getSubmission, getSubmissionByCode, listResponses } from "@/lib/db";
+import { toDiveDeepThought } from "@/lib/types";
 
 export const runtime = "nodejs";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const submission = getSubmission(id);
+  const { searchParams } = new URL(request.url);
+
+  let submission =
+    getSubmission(id) ||
+    (id.toUpperCase().startsWith("QW-") ? getSubmissionByCode(id) : null);
 
   if (!submission) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (searchParams.get("include") === "responses") {
+    return NextResponse.json({
+      ...submission,
+      responses: listResponses(submission.id),
+      diveDeep: toDiveDeepThought(submission),
+    });
   }
 
   return NextResponse.json(submission);

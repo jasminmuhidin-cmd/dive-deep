@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
-import { randomUUID } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import type {
   ActionType,
   Category,
@@ -9,14 +9,36 @@ import type {
   CreateSubmissionInput,
   StewardshipAction,
   Submission,
+  ThoughtResponse,
 } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "shared-burdens.db");
 
+const SELECT_COLS = `id, worry_text, offering_text, category, created_at, is_claimed,
+  anonymous_code, uncover_count, theme, feeling_tag, connection_group`;
+
 const globalForDb = globalThis as unknown as {
   __sharedBurdensDb?: Database.Database;
 };
+
+function ensureColumn(
+  db: Database.Database,
+  table: string,
+  column: string,
+  definition: string,
+) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all() as {
+    name: string;
+  }[];
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+
+function makeAnonymousCode(): string {
+  return `QW-${randomBytes(2).toString("hex").toUpperCase()}`;
+}
 
 function getDb(): Database.Database {
   if (globalForDb.__sharedBurdensDb) {
@@ -35,8 +57,8 @@ function getDb(): Database.Database {
     CREATE TABLE IF NOT EXISTS submissions (
       id TEXT PRIMARY KEY,
       worry_text TEXT NOT NULL,
-      offering_text TEXT NOT NULL,
-      category TEXT NOT NULL,
+      offering_text TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT 'unspecified',
       created_at TEXT NOT NULL,
       is_claimed INTEGER NOT NULL DEFAULT 0
     );
@@ -49,20 +71,82 @@ function getDb(): Database.Database {
       created_at TEXT NOT NULL,
       FOREIGN KEY (submission_id) REFERENCES submissions(id)
     );
+
+    CREATE TABLE IF NOT EXISTS thought_responses (
+      id TEXT PRIMARY KEY,
+      submission_id TEXT NOT NULL,
+      response_text TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (submission_id) REFERENCES submissions(id)
+    );
   `);
+
+  ensureColumn(db, "submissions", "anonymous_code", "TEXT");
+  ensureColumn(db, "submissions", "uncover_count", "INTEGER DEFAULT 0");
+  ensureColumn(db, "submissions", "theme", "TEXT DEFAULT 'unspecified'");
+  ensureColumn(db, "submissions", "feeling_tag", "TEXT DEFAULT 'quiet'");
+  ensureColumn(db, "submissions", "connection_group", "TEXT DEFAULT 'shared'");
+
+  // Backfill anonymous codes for older rows
+  const missing = db
+    .prepare(
+      `SELECT id FROM submissions WHERE anonymous_code IS NULL OR anonymous_code = ''`,
+    )
+    .all() as { id: string }[];
+  const setCode = db.prepare(
+    `UPDATE submissions SET anonymous_code = ? WHERE id = ?`,
+  );
+  for (const row of missing) {
+    setCode.run(makeAnonymousCode(), row.id);
+  }
 
   globalForDb.__sharedBurdensDb = db;
   return db;
 }
 
+type SubmissionRow = {
+  id: string;
+  worry_text: string;
+  offering_text: string;
+  category: Category;
+  created_at: string;
+  is_claimed: number;
+  anonymous_code: string | null;
+  uncover_count: number | null;
+  theme: string | null;
+  feeling_tag: string | null;
+  connection_group: string | null;
+};
+
+function mapSubmission(row: SubmissionRow): Submission {
+  return {
+    id: row.id,
+    worry_text: row.worry_text,
+    offering_text: row.offering_text ?? "",
+    category: row.category,
+    created_at: row.created_at,
+    is_claimed: row.is_claimed,
+    anonymous_code: row.anonymous_code || makeAnonymousCode(),
+    uncover_count: row.uncover_count ?? 0,
+    theme: row.theme || row.category || "unspecified",
+    feeling_tag: row.feeling_tag || "quiet",
+    connection_group: row.connection_group || "shared",
+  };
+}
+
 export function listSubmissions(): Submission[] {
-  return getDb()
-    .prepare(
-      `SELECT id, worry_text, offering_text, category, created_at, is_claimed
-       FROM submissions
-       ORDER BY created_at ASC`,
-    )
-    .all() as Submission[];
+  return (
+    getDb()
+      .prepare(`SELECT ${SELECT_COLS} FROM submissions ORDER BY created_at ASC`)
+      .all() as SubmissionRow[]
+  ).map(mapSubmission);
+}
+
+export function countSubmissions(): number {
+  const row = getDb()
+    .prepare(`SELECT COUNT(*) as n FROM submissions`)
+    .get() as { n: number };
+  return row.n;
 }
 
 export function searchSubmissions(options: {
@@ -73,63 +157,143 @@ export function searchSubmissions(options: {
   const category =
     options.category && options.category !== "all" ? options.category : null;
 
-  let sql = `SELECT id, worry_text, offering_text, category, created_at, is_claimed
-             FROM submissions
-             WHERE 1 = 1`;
+  let sql = `SELECT ${SELECT_COLS} FROM submissions WHERE 1 = 1`;
   const params: string[] = [];
 
   if (category) {
-    sql += ` AND category = ?`;
-    params.push(category);
+    sql += ` AND (category = ? OR theme = ?)`;
+    params.push(category, category);
   }
 
   if (query) {
-    sql += ` AND (LOWER(worry_text) LIKE ? OR LOWER(offering_text) LIKE ?)`;
+    sql += ` AND (
+      LOWER(worry_text) LIKE ?
+      OR LOWER(COALESCE(theme, '')) LIKE ?
+      OR LOWER(COALESCE(anonymous_code, '')) LIKE ?
+    )`;
     const like = `%${query}%`;
-    params.push(like, like);
+    params.push(like, like, like);
   }
 
   sql += ` ORDER BY created_at DESC`;
-
-  return getDb().prepare(sql).all(...params) as Submission[];
+  return (getDb().prepare(sql).all(...params) as SubmissionRow[]).map(
+    mapSubmission,
+  );
 }
 
 export function getSubmission(id: string): Submission | null {
   const row = getDb()
+    .prepare(`SELECT ${SELECT_COLS} FROM submissions WHERE id = ?`)
+    .get(id) as SubmissionRow | undefined;
+  return row ? mapSubmission(row) : null;
+}
+
+export function getSubmissionByCode(code: string): Submission | null {
+  const row = getDb()
     .prepare(
-      `SELECT id, worry_text, offering_text, category, created_at, is_claimed
-       FROM submissions
-       WHERE id = ?`,
+      `SELECT ${SELECT_COLS} FROM submissions WHERE UPPER(anonymous_code) = UPPER(?)`,
     )
-    .get(id) as Submission | undefined;
-  return row ?? null;
+    .get(code.trim()) as SubmissionRow | undefined;
+  return row ? mapSubmission(row) : null;
 }
 
 export function createSubmission(input: CreateSubmissionInput): Submission {
   const id = randomUUID();
   const created_at = new Date().toISOString();
+  const anonymous_code = makeAnonymousCode();
+  const offering_text = (input.offering_text ?? "").trim();
+  const category = (input.category ?? "unspecified") as Category;
+  const theme = input.theme?.trim() || category;
+  const feeling_tag = input.feeling_tag?.trim() || "quiet";
+  const connection_group = input.connection_group?.trim() || theme;
 
   getDb()
     .prepare(
-      `INSERT INTO submissions (id, worry_text, offering_text, category, created_at, is_claimed)
-       VALUES (?, ?, ?, ?, ?, 0)`,
+      `INSERT INTO submissions (
+        id, worry_text, offering_text, category, created_at, is_claimed,
+        anonymous_code, uncover_count, theme, feeling_tag, connection_group
+      ) VALUES (?, ?, ?, ?, ?, 0, ?, 0, ?, ?, ?)`,
     )
     .run(
       id,
       input.worry_text.trim(),
-      input.offering_text.trim(),
-      input.category,
+      offering_text,
+      category,
       created_at,
+      anonymous_code,
+      theme,
+      feeling_tag,
+      connection_group,
     );
 
   return {
     id,
     worry_text: input.worry_text.trim(),
-    offering_text: input.offering_text.trim(),
-    category: input.category,
+    offering_text,
+    category,
     created_at,
     is_claimed: 0,
+    anonymous_code,
+    uncover_count: 0,
+    theme,
+    feeling_tag,
+    connection_group,
   };
+}
+
+export function incrementUncover(id: string): Submission | null {
+  getDb()
+    .prepare(
+      `UPDATE submissions SET uncover_count = COALESCE(uncover_count, 0) + 1 WHERE id = ?`,
+    )
+    .run(id);
+  return getSubmission(id);
+}
+
+export function listResponses(submissionId: string): ThoughtResponse[] {
+  return getDb()
+    .prepare(
+      `SELECT id, submission_id, response_text, created_at
+       FROM thought_responses
+       WHERE submission_id = ?
+       ORDER BY created_at ASC`,
+    )
+    .all(submissionId) as ThoughtResponse[];
+}
+
+export function createThoughtResponse(
+  submissionId: string,
+  responseText: string,
+): ThoughtResponse {
+  const id = randomUUID();
+  const created_at = new Date().toISOString();
+  getDb()
+    .prepare(
+      `INSERT INTO thought_responses (id, submission_id, response_text, created_at)
+       VALUES (?, ?, ?, ?)`,
+    )
+    .run(id, submissionId, responseText.trim(), created_at);
+  return {
+    id,
+    submission_id: submissionId,
+    response_text: responseText.trim(),
+    created_at,
+  };
+}
+
+export function listPendingSince(sinceIso: string | null): Submission[] {
+  if (!sinceIso) {
+    return listSubmissions();
+  }
+  return (
+    getDb()
+      .prepare(
+        `SELECT ${SELECT_COLS} FROM submissions
+         WHERE created_at > ?
+         ORDER BY created_at ASC`,
+      )
+      .all(sinceIso) as SubmissionRow[]
+  ).map(mapSubmission);
 }
 
 export function listStewardshipBySubmission(
@@ -163,12 +327,10 @@ export function createStewardshipAction(
       input.action_type,
       created_at,
     );
-
     db.prepare(`UPDATE submissions SET is_claimed = 1 WHERE id = ?`).run(
       input.submission_id,
     );
   });
-
   insert();
 
   return {
@@ -182,39 +344,22 @@ export function createStewardshipAction(
 
 export function clearAll(): void {
   const db = getDb();
-  db.exec(`DELETE FROM stewardship_actions; DELETE FROM submissions;`);
+  db.exec(
+    `DELETE FROM thought_responses; DELETE FROM stewardship_actions; DELETE FROM submissions;`,
+  );
 }
 
-export function seedSubmission(data: {
-  worry_text: string;
-  offering_text: string;
-  category: Category;
-  created_at?: string;
-}): Submission {
-  const id = randomUUID();
-  const created_at = data.created_at ?? new Date().toISOString();
-
-  getDb()
-    .prepare(
-      `INSERT INTO submissions (id, worry_text, offering_text, category, created_at, is_claimed)
-       VALUES (?, ?, ?, ?, ?, 0)`,
-    )
-    .run(
-      id,
-      data.worry_text,
-      data.offering_text,
-      data.category,
-      created_at,
-    );
-
-  return {
-    id,
-    worry_text: data.worry_text,
-    offering_text: data.offering_text,
-    category: data.category,
-    created_at,
-    is_claimed: 0,
-  };
+export function seedSubmission(
+  data: CreateSubmissionInput & { created_at?: string },
+): Submission {
+  const created = createSubmission(data);
+  if (data.created_at) {
+    getDb()
+      .prepare(`UPDATE submissions SET created_at = ? WHERE id = ?`)
+      .run(data.created_at, created.id);
+    return { ...created, created_at: data.created_at };
+  }
+  return created;
 }
 
 export function seedStewardship(data: {

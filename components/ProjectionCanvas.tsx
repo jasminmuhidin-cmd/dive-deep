@@ -10,6 +10,7 @@ const CATEGORY_COLORS: Record<Category, string> = {
   future: "#8fa3b8",
   belonging: "#b8927a",
   economy: "#9a8b7a",
+  unspecified: "#5eb0c0",
 };
 
 const CATEGORY_ANCHORS: Record<Category, { x: number; y: number }> = {
@@ -18,6 +19,7 @@ const CATEGORY_ANCHORS: Record<Category, { x: number; y: number }> = {
   future: { x: 0.78, y: 0.35 },
   belonging: { x: 0.35, y: 0.68 },
   economy: { x: 0.68, y: 0.7 },
+  unspecified: { x: 0.5, y: 0.5 },
 };
 
 interface Node {

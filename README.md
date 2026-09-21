@@ -1,8 +1,16 @@
-# Shared Burdens
+# deep dive
 
-Interactive installation MVP for initial user testing — kiosk, live projection wall, and stewardship via QR.
+Interactive installation: Next.js kiosk + archive, dive-deep-7 Electron water projection.
+
+## Live site
+
+Public URL: **https://dive-deep.vercel.app**  
+Receipt QR codes and the Electron kiosk bridge default to this host.  
+For local API testing: `window.__KIOSK_API__ = 'http://localhost:3000'` in Electron DevTools.
 
 ## Quick start
+
+**Terminal 1 — kiosk & archive**
 
 ```bash
 npm install
@@ -10,28 +18,24 @@ npm run seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open http://localhost:3000/kiosk and http://localhost:3000/gallery  
+(or the live site at https://dive-deep.vercel.app)
 
-| Route | Purpose |
-|-------|---------|
-| `/` | Testing hub |
-| `/kiosk` | Private multi-step submission |
-| `/gallery` | Searchable archive of all submissions |
-| `/projection` | Live constellation wall (second screen) |
-| `/steward/[id]` | Mobile stewardship via QR |
+**Terminal 2 — projection**
 
-## Phone / QR testing
-
-Set your machine's LAN IP in `.env.local`:
-
-```
-NEXT_PUBLIC_BASE_URL=http://192.168.x.x:3000
+```bash
+cd dive-deep-7
+npm install
+npm start
 ```
 
-Restart `npm run dev`, submit on the kiosk, then scan the on-screen QR from a phone on the same Wi‑Fi.
+Send a ripple from the kiosk; it enters the water with the Thought entry animation.
 
-## Notes
+## Print (Anko MX06)
 
-- Data is stored in local SQLite at `data/shared-burdens.db`
-- Thermal printing is stubbed; use on-screen receipt or browser print
-- Re-run `npm run seed` anytime to reset demo content
+1. Pair **MX06** in macOS Bluetooth settings  
+2. Print from projection (drag a readable thought to the printer icon)  
+3. Composites onto `dive-deep-7/assets/branding/receipt.png`  
+4. Saves PNG to `dive-deep-7/data/prints/` and attempts system print  
+
+WalkPrint app remains a fallback if the OS cannot talk to the device directly.

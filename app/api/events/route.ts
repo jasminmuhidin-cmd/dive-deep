@@ -1,5 +1,5 @@
 import { subscribe } from "@/lib/events";
-import type { Submission } from "@/lib/types";
+import { toDiveDeepThought, type Submission } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +21,7 @@ export async function GET() {
 
       const onSubmission = (submission: Submission) => {
         send("submission", submission);
+        send("ripple", toDiveDeepThought(submission));
       };
 
       cleanup = subscribe(onSubmission);

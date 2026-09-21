@@ -9,23 +9,21 @@ import {
   CATEGORY_LABELS,
   type Category,
   type Submission,
+  type ThoughtResponse,
 } from "@/lib/types";
-
-const TILE_TONES: Record<Category, { bg: string; ink: string; soft: string }> = {
-  environment: { bg: "#5f735c", ink: "#f3eee6", soft: "#d5e0d3" },
-  community: { bg: "#a88868", ink: "#1c1916", soft: "#f0e6d8" },
-  future: { bg: "#6d7f91", ink: "#f3eee6", soft: "#d9e2eb" },
-  belonging: { bg: "#8f6d5c", ink: "#f3eee6", soft: "#eadfd6" },
-  economy: { bg: "#7a6f63", ink: "#f3eee6", soft: "#e5ddd3" },
-};
 
 export default function GalleryView() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [count, setCount] = useState(0);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [category, setCategory] = useState<Category | "all">("all");
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Submission | null>(null);
+  const [responses, setResponses] = useState<ThoughtResponse[]>([]);
+  const [responseText, setResponseText] = useState("");
+  const [codeLookup, setCodeLookup] = useState("");
+  const [posting, setPosting] = useState(false);
 
   useEffect(() => {
     const id = window.setTimeout(() => setDebouncedQuery(query.trim()), 250);
@@ -39,16 +37,24 @@ export default function GalleryView() {
       if (debouncedQuery) params.set("q", debouncedQuery);
       if (category !== "all") params.set("category", category);
       const qs = params.toString();
-      const res = await fetch(`/api/submissions${qs ? `?${qs}` : ""}`);
-      if (!res.ok) throw new Error("Failed to load");
-      const data = (await res.json()) as Submission[];
-      // Newest first for gallery browsing
-      setSubmissions(
-        [...data].sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        ),
-      );
+      const [listRes, countRes] = await Promise.all([
+        fetch(`/api/submissions${qs ? `?${qs}` : ""}`),
+        fetch("/api/submissions?count=1"),
+      ]);
+      if (listRes.ok) {
+        const data = (await listRes.json()) as Submission[];
+        setSubmissions(
+          [...data].sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime(),
+          ),
+        );
+      }
+      if (countRes.ok) {
+        const c = (await countRes.json()) as { count: number };
+        setCount(c.count);
+      }
     } catch {
       setSubmissions([]);
     } finally {
@@ -61,122 +67,183 @@ export default function GalleryView() {
   }, [load]);
 
   useEffect(() => {
-    if (!selected) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelected(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [selected]);
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const code = params.get("code");
+    if (id || code) {
+      fetch(`/api/submissions/${id || code}?include=responses`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data?.id) {
+            setSelected(data);
+            setResponses(data.responses || []);
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  async function openThought(s: Submission) {
+    setSelected(s);
+    setResponseText("");
+    try {
+      const res = await fetch(
+        `/api/responses?submission_id=${encodeURIComponent(s.id)}`,
+      );
+      if (res.ok) setResponses((await res.json()) as ThoughtResponse[]);
+      else setResponses([]);
+    } catch {
+      setResponses([]);
+    }
+  }
+
+  async function openRandom() {
+    if (!submissions.length) return;
+    const s = submissions[Math.floor(Math.random() * submissions.length)];
+    await openThought(s);
+  }
+
+  async function returnByCode() {
+    if (!codeLookup.trim()) return;
+    const res = await fetch(
+      `/api/submissions/${encodeURIComponent(codeLookup.trim())}?include=responses`,
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    setSelected(data);
+    setResponses(data.responses || []);
+  }
+
+  async function postResponse() {
+    if (!selected || !responseText.trim() || posting) return;
+    setPosting(true);
+    try {
+      const res = await fetch("/api/responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          submission_id: selected.id,
+          response_text: responseText.trim(),
+        }),
+      });
+      if (res.ok) {
+        const created = (await res.json()) as ThoughtResponse;
+        setResponses((prev) => [...prev, created]);
+        setResponseText("");
+      }
+    } finally {
+      setPosting(false);
+    }
+  }
 
   const countLabel = useMemo(() => {
-    if (loading) return "Searching the archive…";
-    if (submissions.length === 0) return "No burdens match this search.";
-    return `${submissions.length} quiet weight${submissions.length === 1 ? "" : "s"}`;
-  }, [loading, submissions.length]);
+    const n = count || submissions.length;
+    return `${n.toLocaleString()} thought${n === 1 ? "" : "s"} have entered the shared current.`;
+  }, [count, submissions.length]);
 
   return (
-    <main className="relative min-h-screen bg-[#1a1714] text-glow">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-80"
-        style={{
-          background:
-            "radial-gradient(ellipse at 15% 0%, rgba(196,164,132,0.18), transparent 45%), radial-gradient(ellipse at 90% 20%, rgba(111,127,145,0.12), transparent 40%), linear-gradient(180deg, #1a1714 0%, #12100e 100%)",
-        }}
-      />
+    <main className="relative min-h-screen text-ink">
+      <div className="ocean-bg pointer-events-none absolute inset-0" />
 
-      <div className="relative mx-auto max-w-7xl px-5 py-10 md:px-8 md:py-14">
-        <header className="max-w-3xl">
-          <div className="flex flex-wrap items-center gap-4 text-warm-soft/70">
-            <Link
-              href="/"
-              className="font-mono text-[11px] uppercase tracking-[0.28em] transition hover:text-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+      <div className="relative mx-auto max-w-5xl px-5 py-12 md:px-8 md:py-16">
+        <Link
+          href="/"
+          className="font-mono text-[11px] uppercase tracking-[0.28em] text-mist/60 transition hover:text-foam"
+        >
+          deep dive
+        </Link>
+
+        <h1 className="mt-6 font-serif text-4xl leading-tight text-foam md:text-6xl">
+          What we&apos;ve been carrying
+        </h1>
+        <p className="mt-4 text-lg text-mist">{countLabel}</p>
+
+        <nav className="mt-10 flex flex-wrap gap-3">
+          <WayIn onClick={openRandom} label="Dive deep" hint="Open one at random" />
+          <WayIn
+            onClick={() => {
+              document.getElementById("archive-list")?.scrollIntoView({
+                behavior: "smooth",
+              });
+            }}
+            label="Open one thought"
+            hint="Browse below"
+          />
+          <WayIn
+            onClick={() => setCategory("all")}
+            label="Explore by theme"
+            hint="Use the filters"
+          />
+          <div className="flex min-h-14 items-center gap-2 rounded-full border border-ripple/25 bg-ocean-mid/40 px-4">
+            <input
+              value={codeLookup}
+              onChange={(e) => setCodeLookup(e.target.value)}
+              placeholder="QW-… code"
+              className="w-28 bg-transparent text-sm text-foam placeholder:text-mist/40 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={returnByCode}
+              className="text-sm text-ripple hover:text-foam"
             >
-              Shared Burdens
-            </Link>
-            <span className="text-warm-soft/30">/</span>
-            <span className="font-mono text-[11px] uppercase tracking-[0.22em]">
-              Archive
-            </span>
+              Return
+            </button>
           </div>
-          <h1 className="mt-5 font-serif text-4xl leading-tight tracking-tight text-glow md:text-6xl">
-            A gallery of quiet weights
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-warm-soft/75 md:text-lg">
-            Browse every worry released into the installation. Search by word,
-            filter by theme, open a card to read its paired offering.
-          </p>
-        </header>
+        </nav>
 
         <div className="mt-10 flex flex-col gap-4 md:flex-row md:items-center">
           <label className="relative flex-1">
-            <span className="sr-only">Search submissions</span>
-            <Search
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-warm-soft/50"
-              aria-hidden
-            />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-mist/50" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search a word you carry…"
-              className="min-h-14 w-full rounded-sm border border-warm-soft/20 bg-[#241f1b]/80 py-3 pl-11 pr-4 text-base text-glow placeholder:text-warm-soft/40 focus:border-warm focus:outline-none"
+              placeholder="Search the current…"
+              className="min-h-12 w-full rounded-full border border-ripple/20 bg-ocean-mid/50 py-3 pl-11 pr-4 text-foam placeholder:text-mist/40 focus:border-ripple/50 focus:outline-none"
             />
           </label>
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-warm-soft/55 md:min-w-40 md:text-right">
-            {countLabel}
-          </p>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
           <FilterChip
             active={category === "all"}
             onClick={() => setCategory("all")}
-            label="All themes"
+            label="All"
           />
-          {CATEGORIES.map((c) => (
+          {CATEGORIES.filter((c) => c !== "unspecified").map((c) => (
             <FilterChip
               key={c}
               active={category === c}
               onClick={() => setCategory(c)}
               label={CATEGORY_LABELS[c]}
-              swatch={TILE_TONES[c].bg}
             />
           ))}
         </div>
 
-        <div className="mt-10 columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4">
-          {submissions.map((submission, index) => {
-            const tone = TILE_TONES[submission.category];
-            return (
-              <motion.button
-                key={submission.id}
-                type="button"
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: Math.min(index * 0.02, 0.3) }}
-                onClick={() => setSelected(submission)}
-                className="mb-4 w-full break-inside-avoid rounded-sm p-5 text-left transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
-                style={{ backgroundColor: tone.bg, color: tone.ink }}
-              >
-                <p
-                  className="font-mono text-[10px] uppercase tracking-[0.22em] opacity-70"
-                  style={{ color: tone.ink }}
-                >
-                  {CATEGORY_LABELS[submission.category]}
-                  {submission.is_claimed ? " · stewarded" : ""}
-                </p>
-                <p className="mt-3 font-serif text-xl leading-snug md:text-[1.35rem]">
-                  {submission.worry_text}
-                </p>
-              </motion.button>
-            );
-          })}
+        <div id="archive-list" className="mt-12 columns-1 gap-4 sm:columns-2">
+          {submissions.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => openThought(s)}
+              className="mb-4 w-full break-inside-avoid rounded-2xl border border-ripple/20 bg-ocean-mid/40 p-5 text-left transition hover:border-ripple/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ripple"
+            >
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mist/55">
+                {CATEGORY_LABELS[s.category] || s.theme} · {s.anonymous_code}
+              </p>
+              <p className="mt-3 font-serif text-xl leading-snug text-foam">
+                {s.worry_text}
+              </p>
+              <p className="mt-3 text-xs text-mist/50">
+                Uncovered {s.uncover_count}{" "}
+                {s.uncover_count === 1 ? "time" : "times"}
+              </p>
+            </button>
+          ))}
         </div>
 
         {!loading && submissions.length === 0 && (
-          <p className="mt-16 text-center text-warm-soft/60">
-            Try another word, or clear the theme filter.
+          <p className="mt-16 text-center text-mist/60">
+            The current is still quiet. Send a ripple from the kiosk.
           </p>
         )}
       </div>
@@ -184,7 +251,7 @@ export default function GalleryView() {
       <AnimatePresence>
         {selected && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-ocean-deep/80 p-4 backdrop-blur-sm sm:items-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -192,51 +259,71 @@ export default function GalleryView() {
           >
             <motion.article
               role="dialog"
-              aria-modal="true"
-              aria-labelledby="gallery-detail-title"
-              initial={{ opacity: 0, y: 24 }}
+              aria-modal
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 16 }}
-              transition={{ duration: 0.3 }}
+              exit={{ opacity: 0, y: 12 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-sm border border-warm-soft/15 bg-[#241f1b] p-6 text-glow shadow-2xl md:p-8"
+              className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-ripple/25 bg-ocean-mid p-6 text-foam md:p-8"
             >
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className="absolute right-4 top-4 rounded-sm p-2 text-warm-soft/70 transition hover:bg-warm-soft/10 hover:text-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
+                className="absolute right-4 top-4 rounded-full p-2 text-mist hover:bg-ocean-deep/40"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
-
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-warm-soft/60">
-                {CATEGORY_LABELS[selected.category]}
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mist/60">
+                {selected.anonymous_code} ·{" "}
+                {CATEGORY_LABELS[selected.category] || selected.theme}
               </p>
-              <h2
-                id="gallery-detail-title"
-                className="mt-3 pr-10 font-serif text-3xl leading-snug"
-              >
+              <h2 className="mt-3 pr-10 font-serif text-3xl leading-snug">
                 {selected.worry_text}
               </h2>
-              <div className="mt-8 border-t border-warm-soft/15 pt-6">
-                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-warm-soft/55">
-                  Offering
-                </p>
-                <p className="mt-2 text-lg leading-relaxed text-warm-soft/90">
-                  {selected.offering_text}
-                </p>
-              </div>
-              <p className="mt-6 font-mono text-xs text-warm-soft/45">
-                Released {new Date(selected.created_at).toLocaleString()}
-                {selected.is_claimed ? " · someone has stewarded this" : ""}
+              <p className="mt-4 text-sm text-mist">
+                Uncovered by {selected.uncover_count}{" "}
+                {selected.uncover_count === 1 ? "person" : "people"}
               </p>
-              <Link
-                href={`/steward/${selected.id}`}
-                className="mt-8 inline-flex min-h-12 items-center rounded-sm bg-cream px-5 py-3 text-charcoal transition hover:bg-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm"
-              >
-                Steward this burden
-              </Link>
+
+              <section className="mt-8 border-t border-ripple/20 pt-6">
+                <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-mist/60">
+                  Responses
+                </h3>
+                {responses.length === 0 ? (
+                  <p className="mt-3 text-sm text-mist/60">
+                    No responses yet. Leave one if this stays with you.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-3">
+                    {responses.map((r) => (
+                      <li
+                        key={r.id}
+                        className="border-l border-ripple/30 pl-3 text-sm leading-relaxed text-foam/90"
+                      >
+                        {r.response_text}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <textarea
+                  value={responseText}
+                  onChange={(e) =>
+                    setResponseText(e.target.value.slice(0, 500))
+                  }
+                  rows={3}
+                  placeholder="Share a response…"
+                  className="mt-4 w-full resize-none rounded-2xl border border-ripple/25 bg-ocean-deep/50 px-4 py-3 text-sm text-foam placeholder:text-mist/40 focus:border-ripple/50 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  disabled={!responseText.trim() || posting}
+                  onClick={postResponse}
+                  className="mt-3 min-h-11 rounded-full bg-ripple px-5 py-2 text-sm text-ocean-deep disabled:opacity-40"
+                >
+                  {posting ? "Sending…" : "Share response"}
+                </button>
+              </section>
             </motion.article>
           </motion.div>
         )}
@@ -245,34 +332,48 @@ export default function GalleryView() {
   );
 }
 
-function FilterChip({
-  active,
+function WayIn({
   onClick,
   label,
-  swatch,
+  hint,
 }: {
-  active: boolean;
   onClick: () => void;
   label: string;
-  swatch?: string;
+  hint: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex min-h-11 items-center gap-2 rounded-sm border px-3 py-2 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm ${
+      className="group min-h-14 rounded-full border border-ripple/25 bg-ocean-mid/40 px-5 py-3 text-left transition hover:border-ripple/50"
+    >
+      <span className="block text-sm text-foam">{label}</span>
+      <span className="block text-[11px] text-mist/50 group-hover:text-mist/70">
+        {hint}
+      </span>
+    </button>
+  );
+}
+
+function FilterChip({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-h-10 rounded-full border px-4 py-2 text-sm transition ${
         active
-          ? "border-warm-soft/50 bg-warm-soft/15 text-glow"
-          : "border-warm-soft/15 text-warm-soft/70 hover:border-warm-soft/35 hover:text-glow"
+          ? "border-ripple bg-ripple/20 text-foam"
+          : "border-ripple/20 text-mist hover:border-ripple/40"
       }`}
     >
-      {swatch && (
-        <span
-          className="h-2.5 w-2.5 rounded-full"
-          style={{ backgroundColor: swatch }}
-          aria-hidden
-        />
-      )}
       {label}
     </button>
   );
