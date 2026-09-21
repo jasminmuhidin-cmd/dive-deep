@@ -4,9 +4,8 @@ Interactive installation: Next.js kiosk + archive, dive-deep-7 Electron water pr
 
 ## Live site
 
-Public URL: **https://dive-deep.vercel.app**  
-Receipt QR codes and the Electron kiosk bridge default to this host.  
-For local API testing: `window.__KIOSK_API__ = 'http://localhost:3000'` in Electron DevTools.
+Archive QR target: **https://dive-deep.vercel.app** (deploy Next.js there when ready).  
+Electron still polls **http://localhost:3000** for live ripples during the installation.
 
 ## Quick start
 

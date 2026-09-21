@@ -209,11 +209,11 @@ tests/            dataset · camera · logic · stage2 · stage3  (`npm test`)
 
 ## Kiosk bridge (deep dive Next.js)
 
-When the Next.js kiosk is live at `https://dive-deep.vercel.app` (or local), this app polls `/api/ripples/pending` and listens to `/api/events` for `ripple` events. Each new kiosk submission is injected with the same Thought entry animation (`pool.injectExternal` → `entry.pressExternal`).
+When the Next.js kiosk is running on `http://localhost:3000`, this app polls `/api/ripples/pending` and listens to `/api/events` for `ripple` events. Each new kiosk submission is injected with the same Thought entry animation (`pool.injectExternal` → `entry.pressExternal`).
 
-Default API base: `https://dive-deep.vercel.app`. Override in DevTools: `window.__KIOSK_API__ = 'http://localhost:3000'`.
+Default API base: `http://localhost:3000`. Override in DevTools: `window.__KIOSK_API__ = 'https://dive-deep.vercel.app'`.
 
-Receipt QR codes always link to `https://dive-deep.vercel.app/gallery?id=…`.
+Receipt QR codes link to `https://dive-deep.vercel.app/gallery?id=…` (once that site is deployed).
 
 ### Print
 

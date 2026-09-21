@@ -38,10 +38,11 @@ export default function HomePage() {
         <p className="mt-10 max-w-md font-mono text-xs leading-relaxed text-mist/50">
           Projection: run{" "}
           <code className="text-mist/80">cd dive-deep-7 && npm start</code> —
-          it listens for kiosk ripples at{" "}
-          <code className="text-mist/80">https://dive-deep.vercel.app</code>{" "}
-          (or set{" "}
-          <code className="text-mist/80">window.__KIOSK_API__</code> for local).
+          it listens for kiosk ripples on{" "}
+          <code className="text-mist/80">localhost:3000</code>. Receipt QR
+          links use{" "}
+          <code className="text-mist/80">dive-deep.vercel.app</code> once
+          deployed.
         </p>
       </div>
     </main>

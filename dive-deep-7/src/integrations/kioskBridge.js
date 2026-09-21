@@ -3,7 +3,9 @@
 // Uses poll (reliable in Electron) with optional EventSource when available.
 // ---------------------------------------------------------------------------
 
-const DEFAULT_API = 'https://dive-deep.vercel.app';
+import { DEFAULT_API_URL } from '../config/urls.js';
+
+const DEFAULT_API = DEFAULT_API_URL;
 const POLL_MS = 2500;
 
 /**

@@ -60,33 +60,27 @@ async function handlePrintThought(job) {
     ? `data:image/png;base64,${fs.readFileSync(templatePath).toString('base64')}`
     : null;
 
-  const apiBase = (job.apiBase || 'https://dive-deep.vercel.app').replace(/\/$/, '');
+  const apiBase = (job.apiBase || 'http://localhost:3000').replace(/\/$/, '');
   const archiveUrl =
     job.archiveUrl || `https://dive-deep.vercel.app/gallery?id=${job.id}`;
   const lines = wrapWords(job.text || '', 28);
   const code = job.anonymousCode || '';
 
   let qrDataUrl = null;
-  try {
-    const qrRes = await fetch(
-      `${apiBase}/api/qr?data=${encodeURIComponent(archiveUrl)}&size=140`,
-    );
-    if (qrRes.ok) {
-      const qrJson = await qrRes.json();
-      qrDataUrl = qrJson.dataUrl || null;
-    }
-  } catch {
-    // API may be offline — try public host, then skip QR
+  const qrEndpoints = [
+    `${apiBase}/api/qr?data=${encodeURIComponent(archiveUrl)}&size=140`,
+    `http://localhost:3000/api/qr?data=${encodeURIComponent(archiveUrl)}&size=140`,
+  ];
+  for (const url of qrEndpoints) {
     try {
-      const qrRes = await fetch(
-        `https://dive-deep.vercel.app/api/qr?data=${encodeURIComponent(archiveUrl)}&size=140`,
-      );
+      const qrRes = await fetch(url);
       if (qrRes.ok) {
         const qrJson = await qrRes.json();
         qrDataUrl = qrJson.dataUrl || null;
+        if (qrDataUrl) break;
       }
     } catch {
-      // receipt still prints without QR
+      // try next
     }
   }
 
