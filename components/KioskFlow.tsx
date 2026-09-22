@@ -1,17 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Submission } from "@/lib/types";
+
+const MAX_WORDS = 50;
+
+function wordCount(text: string) {
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
+}
+
+/** Keep at most `max` words; preserves spaces while typing under the limit. */
+function limitToWords(value: string, max: number) {
+  const matches = [...value.matchAll(/\S+/g)];
+  if (matches.length <= max) return value;
+  const last = matches[max - 1];
+  return value.slice(0, last.index! + last[0].length);
+}
 
 export default function KioskFlow() {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<Submission | null>(null);
+  const [done, setDone] = useState<
+    (Submission & {
+      receipt_url?: string;
+      imessage?: { ok: boolean; to?: string; error?: string };
+    }) | null
+  >(null);
+  const words = useMemo(() => wordCount(text), [text]);
 
   async function sendRipple() {
-    if (!text.trim() || submitting) return;
+    if (!text.trim() || submitting || words > MAX_WORDS) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -29,9 +49,30 @@ export default function KioskFlow() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Could not send ripple");
       }
-      const created = (await res.json()) as Submission;
+      const created = (await res.json()) as Submission & {
+        receipt_url?: string;
+        imessage?: { ok: boolean; to?: string; error?: string };
+      };
       setDone(created);
       setText("");
+
+      // Auto-download the composed receipt so you can print / AirDrop / iMessage it
+      try {
+        const receiptRes = await fetch(`/api/receipts/${created.id}`);
+        if (receiptRes.ok) {
+          const blob = await receiptRes.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `receipt-${created.anonymous_code || created.id.slice(0, 8)}.png`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }
+      } catch {
+        // Download is best-effort; "Save receipt" link still works
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -77,14 +118,21 @@ export default function KioskFlow() {
 
               <textarea
                 value={text}
-                onChange={(e) => setText(e.target.value.slice(0, 500))}
+                onChange={(e) =>
+                  setText(limitToWords(e.target.value, MAX_WORDS))
+                }
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter" || e.shiftKey) return;
+                  e.preventDefault();
+                  void sendRipple();
+                }}
                 rows={5}
                 className="mt-8 w-full resize-none rounded-2xl border border-ripple/25 bg-ocean-mid/50 px-5 py-4 text-lg leading-relaxed text-foam placeholder:text-mist/40 focus:border-ripple/60 focus:outline-none"
                 placeholder=""
                 autoFocus
               />
               <p className="mt-2 self-end font-mono text-xs text-mist/50">
-                {text.length}/500
+                {words}/{MAX_WORDS} words
               </p>
 
               {error && (
@@ -118,6 +166,15 @@ export default function KioskFlow() {
                   {done.anonymous_code}
                 </span>
               </p>
+              {done.imessage && (
+                <p
+                  className={`mt-3 text-sm ${done.imessage.ok ? "text-mist/70" : "text-rose"}`}
+                >
+                  {done.imessage.ok
+                    ? `Receipt sent via Messages to ${done.imessage.to}`
+                    : `Messages send failed — check Messages is signed in and Automation is allowed.`}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={() => setDone(null)}

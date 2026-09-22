@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://dive-deep.vercel.app http://localhost:3000 http://127.0.0.1:3000">
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      window.__KIOSK_API__ = location.origin;
+    }
+  </script>
   <style>
     html, body { margin: 0; height: 100%; overflow: hidden; background: #08161f; }
     body { user-select: none; -webkit-user-select: none; touch-action: none; }

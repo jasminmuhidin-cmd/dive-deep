@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["better-sqlite3", "@napi-rs/canvas"],
   // dive-deep-7 Electron (file://) polls / SSE these routes
   async headers() {
     return [

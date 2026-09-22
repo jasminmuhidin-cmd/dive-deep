@@ -28,40 +28,49 @@ const samples = [
     feeling_tag: "lonely",
   },
   {
-    worry_text: "Rent and bills leave little room to care about anything else.",
+    worry_text: "Money talk makes me shut down even when I want to stay present.",
     category: "economy" as const,
     theme: "economy",
     feeling_tag: "overwhelmed",
   },
   {
-    worry_text: "Caring about everything online leaves me numb by afternoon.",
-    category: "community" as const,
-    theme: "community",
-    feeling_tag: "numb",
-  },
-  {
-    worry_text: "I fear rivers and reefs are becoming background decoration.",
+    worry_text: "I wonder if small actions still matter in a system this large.",
     category: "environment" as const,
     theme: "environment",
-    feeling_tag: "grief",
+    feeling_tag: "doubtful",
   },
   {
-    worry_text: "Younger cousins ask about the future and I freeze.",
+    worry_text: "Care work is endless and rarely named as real work.",
+    category: "community" as const,
+    theme: "community",
+    feeling_tag: "tired",
+  },
+  {
+    worry_text: "I am afraid my kids will inherit only our unfinished worries.",
     category: "future" as const,
     theme: "future",
     feeling_tag: "anxious",
   },
 ];
 
-clearAll();
+async function main() {
+  await clearAll();
 
-const created = samples.map((sample, index) => {
-  const created_at = new Date(
-    Date.now() - (samples.length - index) * 60_000,
-  ).toISOString();
-  return seedSubmission({ ...sample, created_at });
+  const created = [];
+  for (let index = 0; index < samples.length; index++) {
+    const sample = samples[index];
+    const created_at = new Date(
+      Date.now() - (samples.length - index) * 60_000,
+    ).toISOString();
+    created.push(await seedSubmission({ ...sample, created_at }));
+  }
+
+  console.log(
+    `Seeded ${created.length} thoughts into ${path.join(process.cwd(), "data", "shared-burdens.db")}`,
+  );
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
 });
-
-console.log(
-  `Seeded ${created.length} thoughts into ${path.join(process.cwd(), "data", "shared-burdens.db")}`,
-);

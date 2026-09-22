@@ -4,11 +4,11 @@ import { toDiveDeepThought } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-/** Poll endpoint for dive-deep-7 Electron bridge */
-export function GET(request: Request) {
+/** Poll endpoint for dive-deep-7 Electron / browser projection bridge */
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const since = searchParams.get("since")?.trim() || null;
-  const pending = listPendingSince(since);
+  const pending = await listPendingSince(since);
   return NextResponse.json({
     thoughts: pending.map(toDiveDeepThought),
     submissions: pending,

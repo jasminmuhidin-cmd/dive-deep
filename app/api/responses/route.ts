@@ -8,14 +8,14 @@ import {
 
 export const runtime = "nodejs";
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const submissionId = searchParams.get("submission_id")?.trim();
   const code = searchParams.get("code")?.trim();
 
   let id = submissionId;
   if (!id && code) {
-    const found = getSubmissionByCode(code);
+    const found = await getSubmissionByCode(code);
     if (!found) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -27,10 +27,10 @@ export function GET(request: Request) {
       { status: 400 },
     );
   }
-  if (!getSubmission(id)) {
+  if (!(await getSubmission(id))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  return NextResponse.json(listResponses(id));
+  return NextResponse.json(await listResponses(id));
 }
 
 export async function POST(request: Request) {
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const submission_id = String(body.submission_id ?? "").trim();
     const response_text = String(body.response_text ?? "").trim();
 
-    if (!submission_id || !getSubmission(submission_id)) {
+    if (!submission_id || !(await getSubmission(submission_id))) {
       return NextResponse.json(
         { error: "submission not found" },
         { status: 404 },
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = createThoughtResponse(submission_id, response_text);
+    const response = await createThoughtResponse(submission_id, response_text);
     return NextResponse.json(response, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

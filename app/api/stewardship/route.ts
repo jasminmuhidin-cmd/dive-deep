@@ -19,11 +19,11 @@ export async function GET(request: Request) {
     );
   }
 
-  if (!getSubmission(submissionId)) {
+  if (!(await getSubmission(submissionId))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(listStewardshipBySubmission(submissionId));
+  return NextResponse.json(await listStewardshipBySubmission(submissionId));
 }
 
 export async function POST(request: Request) {
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     const response_text = String(body.response_text ?? "").trim();
     const action_type = body.action_type as ActionType;
 
-    if (!submission_id || !getSubmission(submission_id)) {
+    if (!submission_id || !(await getSubmission(submission_id))) {
       return NextResponse.json(
         { error: "submission not found" },
         { status: 404 },
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const action = createStewardshipAction({
+    const action = await createStewardshipAction({
       submission_id,
       response_text,
       action_type,

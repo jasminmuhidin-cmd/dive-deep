@@ -12,8 +12,10 @@ export async function GET(
   const { searchParams } = new URL(request.url);
 
   let submission =
-    getSubmission(id) ||
-    (id.toUpperCase().startsWith("QW-") ? getSubmissionByCode(id) : null);
+    (await getSubmission(id)) ||
+    (id.toUpperCase().startsWith("QW-")
+      ? await getSubmissionByCode(id)
+      : null);
 
   if (!submission) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -22,7 +24,7 @@ export async function GET(
   if (searchParams.get("include") === "responses") {
     return NextResponse.json({
       ...submission,
-      responses: listResponses(submission.id),
+      responses: await listResponses(submission.id),
       diveDeep: toDiveDeepThought(submission),
     });
   }

@@ -28,23 +28,6 @@ function createWindow() {
   return win;
 }
 
-function wrapWords(text, maxChars) {
-  const words = String(text || '').split(/\s+/);
-  const lines = [];
-  let line = '';
-  for (const word of words) {
-    const test = line ? `${line} ${word}` : word;
-    if (line && test.length > maxChars) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = test;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-
 /**
  * Composite thought onto receipt.png via offscreen BrowserWindow,
  * then save PNG and attempt silent system print (Anko MX06 if paired as printer).
@@ -63,7 +46,7 @@ async function handlePrintThought(job) {
   const apiBase = (job.apiBase || 'http://localhost:3000').replace(/\/$/, '');
   const archiveUrl =
     job.archiveUrl || `https://dive-deep.vercel.app/gallery?id=${job.id}`;
-  const lines = wrapWords(job.text || '', 28);
+  const thoughtText = String(job.text || '');
   const code = job.anonymousCode || '';
 
   let qrDataUrl = null;
@@ -107,21 +90,63 @@ async function handlePrintThought(job) {
   ctx.drawImage(tpl, 0, 0);
   const left = 40, top = 40, rightPad = 80;
   const maxW = canvas.width - left - rightPad;
-  const fontSize = 48;
-  const lineH = fontSize * 1.25;
+  const maxBottom = canvas.height * 0.58;
+  const maxH = maxBottom - top;
   const padX = 10, padY = 4;
-  ctx.font = 'italic ' + fontSize + 'px Georgia, serif';
+  const thoughtText = ${JSON.stringify(thoughtText)};
   ctx.textBaseline = 'top';
-  const lines = ${JSON.stringify(lines)};
+
+  function wrapAtSize(size) {
+    ctx.font = 'italic ' + size + 'px Georgia, serif';
+    const words = thoughtText.split(/\\s+/).filter(Boolean);
+    const out = [];
+    let line = '';
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (line && ctx.measureText(test).width > maxW) {
+        out.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) out.push(line);
+    // If a single word is wider than maxW, hard-break by characters
+    const fixed = [];
+    for (const ln of out) {
+      if (ctx.measureText(ln).width <= maxW) { fixed.push(ln); continue; }
+      let chunk = '';
+      for (const ch of ln) {
+        const t = chunk + ch;
+        if (chunk && ctx.measureText(t).width > maxW) {
+          fixed.push(chunk);
+          chunk = ch;
+        } else chunk = t;
+      }
+      if (chunk) fixed.push(chunk);
+    }
+    return fixed;
+  }
+
+  let fontSize = 80;
+  const minSize = 28;
+  let lines = wrapAtSize(fontSize);
+  let lineH = fontSize * 1.25;
+  while (fontSize > minSize && lines.length * lineH > maxH) {
+    fontSize -= 2;
+    lines = wrapAtSize(fontSize);
+    lineH = fontSize * 1.25;
+  }
+
   let y = top;
   for (const line of lines) {
+    if (y + fontSize > maxBottom) break;
     const tw = Math.min(maxW, ctx.measureText(line).width);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(left - padX, y - padY, tw + padX * 2, fontSize + padY * 2);
     ctx.fillStyle = '#111';
     ctx.fillText(line, left, y);
     y += lineH;
-    if (y > canvas.height * 0.62) break;
   }
   const code = ${JSON.stringify(code)};
   if (code) {

@@ -29,6 +29,12 @@ export default function HomePage() {
             Open kiosk
           </Link>
           <Link
+            href="/water/"
+            className="rounded-full border border-ripple/30 px-6 py-4 text-center text-foam transition hover:border-foam/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ripple"
+          >
+            Live projection
+          </Link>
+          <Link
             href="/gallery"
             className="rounded-full border border-ripple/30 px-6 py-4 text-center text-foam transition hover:border-foam/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ripple"
           >
@@ -36,13 +42,11 @@ export default function HomePage() {
           </Link>
         </div>
         <p className="mt-10 max-w-md font-mono text-xs leading-relaxed text-mist/50">
-          Projection: run{" "}
-          <code className="text-mist/80">cd dive-deep-7 && npm start</code> —
-          it listens for kiosk ripples on{" "}
-          <code className="text-mist/80">localhost:3000</code>. Receipt QR
-          links use{" "}
-          <code className="text-mist/80">dive-deep.vercel.app</code> once
-          deployed.
+          Live loop: kiosk → API →{" "}
+          <a href="/water/" className="text-mist/80 underline">
+            /water
+          </a>
+          . For room install with camera/print, also run Electron locally.
         </p>
       </div>
     </main>

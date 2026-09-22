@@ -6,23 +6,24 @@ import {
   searchSubmissions,
 } from "@/lib/db";
 import { publishSubmission } from "@/lib/events";
+import { storeReceiptForSubmission } from "@/lib/receipt-store";
 import { CATEGORIES, toDiveDeepThought, type Category } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim() ?? "";
   const categoryParam = searchParams.get("category")?.trim() ?? "all";
   const format = searchParams.get("format");
 
   if (searchParams.get("count") === "1") {
-    return NextResponse.json({ count: countSubmissions() });
+    return NextResponse.json({ count: await countSubmissions() });
   }
 
   let list;
   if (!q && categoryParam === "all") {
-    list = listSubmissions();
+    list = await listSubmissions();
   } else {
     const category =
       categoryParam === "all"
@@ -33,7 +34,7 @@ export function GET(request: Request) {
     if (category === null) {
       return NextResponse.json({ error: "invalid category" }, { status: 400 });
     }
-    list = searchSubmissions({ query: q || undefined, category });
+    list = await searchSubmissions({ query: q || undefined, category });
   }
 
   if (format === "dive-deep") {
@@ -57,14 +58,17 @@ export async function POST(request: Request) {
         : "unspecified"
     ) as Category;
 
-    if (!worry_text || worry_text.length > 500) {
+    const wordCount = worry_text
+      ? worry_text.split(/\s+/).filter(Boolean).length
+      : 0;
+    if (!worry_text || wordCount > 50) {
       return NextResponse.json(
-        { error: "thought must be 1–500 characters" },
+        { error: "thought must be 1–50 words" },
         { status: 400 },
       );
     }
 
-    const submission = createSubmission({
+    const submission = await createSubmission({
       worry_text,
       offering_text,
       category,
@@ -77,8 +81,25 @@ export async function POST(request: Request) {
 
     publishSubmission(submission);
 
+    let receipt_url = `/api/receipts/${submission.id}`;
+    let imessage: { ok: boolean; to?: string; error?: string } | undefined;
+    try {
+      const stored = await storeReceiptForSubmission(submission);
+      receipt_url = stored.receipt_url.startsWith("http")
+        ? stored.receipt_url
+        : `/api/receipts/${submission.id}`;
+      imessage = stored.imessage;
+    } catch (err) {
+      console.error("[submissions] receipt generation failed:", err);
+    }
+
     return NextResponse.json(
-      { ...submission, diveDeep: toDiveDeepThought(submission) },
+      {
+        ...submission,
+        diveDeep: toDiveDeepThought(submission),
+        receipt_url,
+        imessage,
+      },
       { status: 201 },
     );
   } catch {

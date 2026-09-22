@@ -1,0 +1,8 @@
+# Keep Electron-only bits out of the deploy (browser water is in public/water)
+dive-deep-7/electron
+dive-deep-7/node_modules
+dive-deep-7/tests
+dive-deep-7/data
+receipt.png
+*.pdf.png
+.vscode

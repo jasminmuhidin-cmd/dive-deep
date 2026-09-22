@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const submission = getSubmission(submissionId);
+    const submission = await getSubmission(submissionId);
     if (!submission) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }

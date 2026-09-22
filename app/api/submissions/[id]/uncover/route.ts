@@ -8,9 +8,9 @@ export async function POST(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  if (!getSubmission(id)) {
+  if (!(await getSubmission(id))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  const updated = incrementUncover(id);
+  const updated = await incrementUncover(id);
   return NextResponse.json(updated);
 }

@@ -215,11 +215,9 @@ Default API base: `http://localhost:3000`. Override in DevTools: `window.__KIOSK
 
 Receipt QR codes link to `https://dive-deep.vercel.app/gallery?id=…` (once that site is deployed).
 
-### Print
+When a new kiosk ripple enters the water, a receipt PNG is already generated on the server (`/api/receipts/[id]`). Drag-to-print still works in Electron for on-site printing.
 
-Drag a readable thought down to the printer icon (or release in the print zone) to composite onto `assets/branding/receipt.png` and print (Electron IPC / mock).
-
-Receipt layout: 48px italic text with a white rectangle behind each line, 40px top/left inset, 80px right inset, QR bottom-left to the archive, anonymous code on the slip.
+Receipt layout: up to **80px** italic text (shrinks to fit longer thoughts), white rectangle behind each line, 40px top/left inset, 80px right inset, QR bottom-left to the archive, anonymous code on the slip.
 
 ### Anko MX06 Bluetooth
 
