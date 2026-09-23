@@ -38,6 +38,10 @@
   --color-charcoal: var(--charcoal);
   --color-warm: var(--warm);
   --color-warm-soft: var(--warm-soft);
+  --color-ocean-deep: var(--depth);
+  --color-ocean-mid: #243044;
+  --color-ripple: var(--seafoam);
+  --color-mist: color-mix(in srgb, var(--foam) 55%, transparent);
   --font-sans: var(--font-body);
   --font-serif: var(--font-display);
   --font-mono: var(--font-mono);
@@ -54,6 +58,15 @@ body {
 }
 
 .deep-dive-bg {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(233, 214, 140, 0.22), transparent 42%),
+    radial-gradient(ellipse at 80% 20%, rgba(198, 151, 157, 0.18), transparent 40%),
+    radial-gradient(ellipse at 50% 90%, rgba(20, 122, 144, 0.35), transparent 50%),
+    linear-gradient(165deg, #2d3651 0%, #1a2033 55%, #121826 100%);
+}
+
+/* Compat aliases used by gallery / kiosk */
+.ocean-bg {
   background:
     radial-gradient(ellipse at 20% 10%, rgba(233, 214, 140, 0.22), transparent 42%),
     radial-gradient(ellipse at 80% 20%, rgba(198, 151, 157, 0.18), transparent 40%),

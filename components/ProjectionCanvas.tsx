@@ -18,6 +18,7 @@ const CATEGORY_COLORS: Record<Category, string> = {
   future: "#147a90",
   belonging: "#e9d68c",
   economy: "#8a9aa8",
+  unspecified: "#6b7c8a",
 };
 
 const CATEGORY_ANCHORS: Record<Category, { x: number; y: number }> = {
@@ -467,9 +468,9 @@ export default function ProjectionCanvas() {
                   {selectedInsight}
                 </p>
               )}
-              {selected.frictions?.length > 0 && (
+              {(selected.frictions?.length ?? 0) > 0 && (
                 <div className="mt-5 flex flex-wrap gap-2">
-                  {selected.frictions.map((f) => (
+                  {(selected.frictions ?? []).map((f) => (
                     <span
                       key={`${f.id}-${f.label}`}
                       className="rounded-full border border-seafoam/35 bg-seafoam/10 px-3 py-1 text-xs text-sand"

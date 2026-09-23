@@ -1,6 +1,5 @@
 # deep dive
 
-<<<<<<< HEAD
 Interactive installation: Next.js kiosk + archive, dive-deep-7 Electron water projection.
 
 ## Live site
@@ -9,9 +8,6 @@ Archive QR target: **https://dive-deep.vercel.app** (deploy Next.js there when r
 Electron still polls **http://localhost:3000** for live ripples during the installation.
 
 On the **local Mac** kiosk (`npm run dev`), each receipt PNG is also sent via **Messages / iMessage** to `IMESSAGE_TO` (default `0422322522` → `+61422322522`). Requires Messages signed in and Automation permission for Terminal/Node (System Settings → Privacy & Security → Automation). Set `IMESSAGE_SEND=0` to disable. Does not run on Vercel.
-=======
-Interactive installation MVP for initial user testing — swipeable onboarding prompts, sea-creature artefacts, live projection wall, searchable archive, and stewardship via QR.
->>>>>>> ac8b2fe33212a9dcf34d66326304e062e78fcbfa
 
 ## Quick start
 

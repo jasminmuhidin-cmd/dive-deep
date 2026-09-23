@@ -35,6 +35,13 @@ export interface FrictionItem {
   label: string;
 }
 
+export interface ThoughtResponse {
+  id: string;
+  submission_id: string;
+  response_text: string;
+  created_at: string;
+}
+
 export interface Submission {
   id: string;
   worry_text: string;
@@ -42,10 +49,15 @@ export interface Submission {
   category: Category;
   created_at: string;
   is_claimed: number;
-  prompt_type: PromptType | null;
-  fish_form: FishForm | null;
-  why_text: string | null;
-  frictions: FrictionItem[];
+  anonymous_code: string;
+  uncover_count: number;
+  theme: string;
+  feeling_tag: string;
+  connection_group: string;
+  prompt_type?: PromptType | null;
+  fish_form?: FishForm | null;
+  why_text?: string | null;
+  frictions?: FrictionItem[];
 }
 
 export interface StewardshipAction {
@@ -59,9 +71,12 @@ export interface StewardshipAction {
 export interface CreateSubmissionInput {
   worry_text: string;
   offering_text?: string;
-  category: Category;
-  prompt_type: PromptType;
-  fish_form: FishForm;
+  category?: Category;
+  theme?: string;
+  feeling_tag?: string;
+  connection_group?: string;
+  prompt_type?: PromptType;
+  fish_form?: FishForm;
   why_text?: string | null;
   frictions?: FrictionItem[];
 }
@@ -181,4 +196,17 @@ export function insightForFriction(friction: FrictionItem | null | undefined): s
     FRICTION_INSIGHTS[friction.id] ??
     FRICTION_INSIGHTS.something_else
   );
+}
+
+/** Shape expected by dive-deep-7 / kiosk bridge */
+export function toDiveDeepThought(s: Submission) {
+  return {
+    id: s.id,
+    text: s.worry_text,
+    theme: s.theme || s.category || "unspecified",
+    feelingTag: s.feeling_tag || "quiet",
+    connectionGroup: s.connection_group || s.theme || s.category || "shared",
+    source: "kiosk",
+    anonymousCode: s.anonymous_code,
+  };
 }

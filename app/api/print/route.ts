@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const exchange = exchangeId ? getSubmission(exchangeId) : null;
+    const exchange = exchangeId ? await getSubmission(exchangeId) : null;
 
     const baseUrl =
       process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ||

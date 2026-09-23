@@ -31,10 +31,10 @@ export default function HomePage() {
             Open kiosk
           </Link>
           <Link
-            href="/water/"
-            className="rounded-full border border-ripple/30 px-6 py-4 text-center text-foam transition hover:border-foam/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ripple"
+            href="/projection"
+            className="rounded-full border border-foam/20 px-6 py-4 text-center text-foam transition hover:border-foam/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand"
           >
-            Live projection
+            Live projection (R3F)
           </Link>
           <Link
             href="/gallery"
@@ -43,18 +43,19 @@ export default function HomePage() {
             Browse archive
           </Link>
           <Link
-            href="/projection"
-            className="rounded-full border border-foam/20 px-6 py-4 text-center text-foam transition hover:border-foam/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand"
+            href="/water/"
+            className="rounded-full border border-foam/15 px-6 py-4 text-center text-foam/60 transition hover:border-foam/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand"
           >
-            Open projection
+            Legacy water
           </Link>
         </div>
-        <p className="mt-10 max-w-md font-mono text-xs leading-relaxed text-mist/50">
-          Live loop: kiosk → API →{" "}
-          <a href="/water/" className="text-mist/80 underline">
-            /water
-          </a>
-          . For room install with camera/print, also run Electron locally.
+        <p className="mt-10 max-w-md font-mono text-xs leading-relaxed text-foam/40">
+          Phase 3 projection:{" "}
+          <a href="/projection" className="text-foam/70 underline">
+            /projection
+          </a>{" "}
+          (motion ripples · blob · thoughts)
+          . Webcam + ripples land in later phases.
         </p>
       </div>
     </main>

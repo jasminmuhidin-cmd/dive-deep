@@ -43,7 +43,6 @@ const samples: CreateSubmissionInput[] = [
     ],
   },
   {
-<<<<<<< HEAD
     worry_text: "Money talk makes me shut down even when I want to stay present.",
     category: "economy" as const,
     theme: "economy",
@@ -66,55 +65,6 @@ const samples: CreateSubmissionInput[] = [
     category: "future" as const,
     theme: "future",
     feeling_tag: "anxious",
-=======
-    worry_text: "Rent and bills leave little room to care about anything else.",
-    category: "economy",
-    prompt_type: "worry",
-    fish_form: "seahorse",
-    frictions: [
-      { id: "no_capacity", label: "I don't have the capacity right now" },
-      { id: "too_big", label: "It feels too big" },
-    ],
-  },
-  {
-    worry_text: "Caring about everything online leaves me numb by afternoon.",
-    category: "community",
-    prompt_type: "care",
-    fish_form: "turtle",
-    frictions: [{ id: "overwhelming", label: "It gets overwhelming" }],
-  },
-  {
-    worry_text: "I fear rivers and reefs are becoming background decoration.",
-    category: "environment",
-    prompt_type: "voice",
-    fish_form: "betta",
-    frictions: [{ id: "distant", label: "It feels distant from my life" }],
-  },
-  {
-    worry_text: "Something I wish I understood better is how change actually starts locally.",
-    category: "future",
-    prompt_type: "curiosity",
-    fish_form: "angelfish",
-    frictions: [
-      { id: "dont_know_what_to_do", label: "I don't know what I could do" },
-    ],
-  },
-  {
-    worry_text: "Group chats go silent when hard news appears.",
-    category: "belonging",
-    prompt_type: "worry",
-    fish_form: "seahorse",
-    frictions: [{ id: "unsafe", label: "It can feel unsafe to talk about" }],
-  },
-  {
-    worry_text: "Work asks for more while community needs more too.",
-    category: "economy",
-    prompt_type: "care",
-    fish_form: "turtle",
-    frictions: [
-      { id: "no_capacity", label: "I don't have the capacity right now" },
-    ],
->>>>>>> ac8b2fe33212a9dcf34d66326304e062e78fcbfa
   },
 ];
 

@@ -283,7 +283,7 @@ export default function GalleryView() {
                     promptType={selected.prompt_type}
                     thought={selected.worry_text}
                     whyText={selected.why_text}
-                    frictions={selected.frictions}
+                    frictions={selected.frictions ?? []}
                     category={selected.category}
                   />
                 </div>
