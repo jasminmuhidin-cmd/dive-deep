@@ -43,6 +43,12 @@ export default function HomePage() {
             Browse archive
           </Link>
           <Link
+            href="/mobile"
+            className="rounded-full border border-foam/20 px-6 py-4 text-center text-foam transition hover:border-foam/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand"
+          >
+            Mobile dive
+          </Link>
+          <Link
             href="/water/"
             className="rounded-full border border-foam/15 px-6 py-4 text-center text-foam/60 transition hover:border-foam/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand"
           >

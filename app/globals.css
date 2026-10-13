@@ -127,3 +127,66 @@ body {
 .ethereal-aura {
   position: relative;
 }
+
+/* ---------- Mobile dive (/mobile) ---------- */
+@keyframes dive-ray-sway {
+  0%, 100% { opacity: 0.5; transform: rotate(var(--ray-rot)) translateX(0); }
+  50% { opacity: 0.95; transform: rotate(calc(var(--ray-rot) + 3deg)) translateX(2vw); }
+}
+@keyframes dive-shimmer {
+  0%, 100% { opacity: 0.8; transform: scaleX(1); }
+  50% { opacity: 1; transform: scaleX(1.06); }
+}
+@keyframes dive-swim {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(calc(var(--swim-x) * 0.5), -7px) rotate(-2deg); }
+  50% { transform: translate(var(--swim-x), 0) rotate(0deg); }
+  75% { transform: translate(calc(var(--swim-x) * 0.5), 7px) rotate(2deg); }
+}
+@keyframes dive-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+@keyframes dive-bubble {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 0.8; }
+  50% { transform: translate(10px, -55vh); }
+  100% { transform: translate(-6px, -110vh); opacity: 0; }
+}
+@keyframes dive-snow {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate(18px, 112vh); opacity: 0.2; }
+}
+@keyframes dive-school {
+  from { transform: translateX(-30vw); }
+  to { transform: translateX(120vw); }
+}
+@keyframes dive-lure {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes dive-tentacles {
+  0%, 100% { transform: skewX(0deg); }
+  50% { transform: skewX(6deg); }
+}
+
+.dive-ray { animation: dive-ray-sway 9s ease-in-out infinite; }
+.dive-shimmer { animation: dive-shimmer 7s ease-in-out infinite; }
+.dive-swim { animation: dive-swim 10s ease-in-out infinite; }
+.dive-bob { animation: dive-bob 1.8s ease-in-out infinite; }
+.dive-bubble { animation: dive-bubble 12s linear infinite; }
+.dive-snow { animation: dive-snow 24s linear infinite; }
+.dive-school { animation: dive-school 40s linear infinite; }
+.dive-lure { animation: dive-lure 2.4s ease-in-out infinite; }
+.dive-tentacles {
+  transform-origin: 50% 40%;
+  animation: dive-tentacles 3.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dive-ray, .dive-shimmer, .dive-swim, .dive-bob, .dive-bubble,
+  .dive-snow, .dive-school, .dive-lure, .dive-tentacles {
+    animation: none;
+  }
+}
