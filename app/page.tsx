@@ -20,7 +20,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-/** The website archive: a dive down through every thought left at the kiosk */
-export default function GalleryPage() {
+/** The home page and website archive: a dive down through every thought left at the kiosk */
+export default function DivePage() {
   return <MobileApp className={serif.className} />;
 }

@@ -14,7 +14,7 @@ import FishSchool from "@/components/kiosk/FishSchool";
 const links = [
   { href: "/kiosk", label: "Kiosk" },
   { href: "/projection", label: "Live Projection" },
-  { href: "/gallery", label: "Website Archive" },
+  { href: "/", label: "Website Archive" },
 ];
 
 export default function HomePage() {

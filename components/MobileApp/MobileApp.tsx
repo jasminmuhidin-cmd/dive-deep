@@ -152,7 +152,7 @@ export default function MobileApp({ className = "" }: { className?: string }) {
   const floorRef = useRef<HTMLElement>(null);
 
   // Live thoughts from the kiosk, with the samples as filler. A link like
-  // /gallery?thought=<id> opens that thought on arrival.
+  // /?thought=<id> opens that thought on arrival.
   useEffect(() => {
     const linked = new URLSearchParams(window.location.search).get("thought");
     fetch("/api/submissions")
