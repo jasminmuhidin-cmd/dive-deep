@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   // `npm run dev`. Build/runtime errors still show. Never shown on Vercel.
   devIndicators: false,
   serverExternalPackages: ["better-sqlite3", "@napi-rs/canvas"],
+  // the receipt is drawn on the server from these files, so they ship with the routes that draw it
+  outputFileTracingIncludes: {
+    "/api/submissions": ["./public/branding/receipt-*.png", "./public/fonts/FrescoStamp.ttf"],
+    "/api/receipts/[id]": ["./public/branding/receipt-*.png", "./public/fonts/FrescoStamp.ttf"],
+  },
   // the archive dive used to live at /mobile; old links (with their ?thought=) still land on it
   async redirects() {
     return [{ source: "/mobile", destination: "/gallery", permanent: true }];
