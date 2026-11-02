@@ -7,13 +7,14 @@ import Ripples from "@/components/kiosk/Ripples";
 import SeaCreatures from "@/components/kiosk/SeaCreatures";
 import FishSchool from "@/components/kiosk/FishSchool";
 import { FRILL } from "@/components/kiosk/frillyFish";
+import { PrinterButton, useReceiptPrinter } from "@/components/kiosk/ReceiptPrinter";
 
 /**
  * Kiosk flow:
  *   welcome → "I care about…" → "because…" (optional)
  *   → your thought takes shape (its words break into dots, swirl, and form a fish)
  *   → place it in the water (how long it has stayed with you)
- *   → thank you + print.
+ *   → check your receipt → thank you + print.
  *
  * Design rules followed (Norman's heuristics / common UX laws):
  *  - Visibility of status: step dots, "Listening…", "Sending…", printing.
@@ -29,15 +30,15 @@ import { FRILL } from "@/components/kiosk/frillyFish";
  *    and an idle reset so the next visitor never sees someone else's words.
  */
 
-type Step = "welcome" | "care" | "because" | "place" | "sending" | "done";
+type Step = "welcome" | "care" | "because" | "place" | "preview" | "sending" | "done";
 type Level = "recent" | "common" | "deep";
 
 const MAX_WORDS = 50;
 const IDLE_RESET_MS = 90_000;
 const DONE_RESET_MS = 40_000;
 const SENDING_MS = 500;
-const ORDER: Step[] = ["welcome", "care", "because", "place", "sending", "done"];
-const STEPS: Step[] = ["care", "because", "place"];
+const ORDER: Step[] = ["welcome", "care", "because", "place", "preview", "sending", "done"];
+const STEPS: Step[] = ["care", "because", "place", "preview"];
 
 const QUESTION = "What is a quiet weight or worry you carry about our world?";
 
@@ -68,6 +69,7 @@ const SPOKEN: Record<Step, string> = {
   care: `${QUESTION} All responses remain anonymous. Finish the sentence: I care about. Type, or tap the microphone to speak.`,
   because: "Go a little deeper? Your first answer is shown above the box. Finish the sentence: I care because. Or tap Skip this step.",
   place: "How long has this worry stayed with you? Tap and drag to place your worry: the sunlight zone for a recent worry, the twilight zone if it keeps coming back, or the midnight zone if you have carried it for so long and want to let it rest here. Then tap Next.",
+  preview: "Here is your receipt. Check your words, then tap Print and send. Or tap Back to change them.",
   sending: "Sending your worry as a ripple.",
   done: "Take your printed worry. Tap Done when you are finished.",
 };
@@ -89,6 +91,44 @@ export default function KioskFlow() {
   const [spot, setSpot] = useState<{ x: number; y: number } | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const printer = useReceiptPrinter();
+  // the receipt that's already gone to the printer, so a retry after a failed send doesn't print it twice
+  const printedKey = useRef<string | null>(null);
+
+  // Their receipt, drawn from their words for the preview, and shown again sliding out on the last screen
+  const receiptKey = `${care.trim()}\n${because.trim()}`;
+  const [receipt, setReceipt] = useState<{ key: string; src: string | null; failed: boolean }>({
+    key: "",
+    src: null,
+    failed: false,
+  });
+  const wantReceipt = step === "preview" || step === "sending" || step === "done";
+  useEffect(() => {
+    if (!wantReceipt) return;
+    let cancelled = false;
+    fetch("/api/receipts/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ care: care.trim(), because: because.trim() }),
+    })
+      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error())))
+      .then((blob) => {
+        if (cancelled) return;
+        const src = URL.createObjectURL(blob);
+        setReceipt((prev) => {
+          if (prev.src) URL.revokeObjectURL(prev.src);
+          return { key: receiptKey, src, failed: false };
+        });
+      })
+      .catch(() => !cancelled && setReceipt((prev) => ({ ...prev, key: receiptKey, failed: true })));
+    return () => {
+      cancelled = true;
+    };
+    // care and because are covered by receiptKey
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantReceipt, receiptKey]);
+  const receiptSrc = receipt.key === receiptKey ? receipt.src : null;
+  const receiptFailed = receipt.key === receiptKey && receipt.failed;
 
   // Accessibility settings (cleared for each new visitor)
   const [sizeStep, setSizeStep] = useState(0);
@@ -102,6 +142,11 @@ export default function KioskFlow() {
     setSpot(null);
     setError(null);
     setSending(false);
+    setReceipt((prev) => {
+      if (prev.src) URL.revokeObjectURL(prev.src);
+      return { key: "", src: null, failed: false };
+    });
+    printedKey.current = null;
     setSizeStep(0);
     setEasyRead(false);
     setReadAloud(false);
@@ -144,6 +189,12 @@ export default function KioskFlow() {
     setSending(true);
     setError(null);
     setStep("sending");
+    // start printing straight away from the receipt they just checked, while the thought saves
+    const printNow = receiptSrc !== null && printedKey.current !== receiptKey;
+    if (printNow) {
+      printer.printImage(receiptSrc);
+      printedKey.current = receiptKey;
+    }
     const minWait = new Promise((r) => window.setTimeout(r, SENDING_MS));
     try {
       const res = await fetch("/api/submissions", {
@@ -158,12 +209,19 @@ export default function KioskFlow() {
         }),
       });
       if (!res.ok) throw new Error();
+      // the receipt prints over Bluetooth in the background, while the thank-you shows
+      const { id } = (await res.json()) as { id: string };
+      // no preview to print from (it failed to draw): print the server's copy instead
+      if (!printNow && printedKey.current !== receiptKey) {
+        printer.print(id);
+        printedKey.current = receiptKey;
+      }
       await minWait;
       setStep("done");
     } catch {
       await minWait;
-      setError("That didn't send. Please tap Next again.");
-      setStep("place");
+      setError("That didn't send. Please tap Print and send again.");
+      setStep("preview");
     } finally {
       setSending(false);
     }
@@ -184,6 +242,8 @@ export default function KioskFlow() {
         <div className="kiosk-orb kiosk-orb-tr" />
         <div className="kiosk-orb kiosk-orb-bl" />
       </div>
+
+      <PrinterButton {...printer} />
 
       <A11yMenu
         sizeStep={sizeStep}
@@ -269,7 +329,26 @@ export default function KioskFlow() {
             spot={spot}
             onSpot={setSpot}
             onBack={() => setStep("because")}
-            onDone={send}
+            onDone={() => {
+              setError(null);
+              setStep("preview");
+            }}
+            sending={sending}
+            error={null}
+            stepNo={stepNo}
+          />
+        )}
+
+        {step === "preview" && (
+          <Preview
+            key="preview"
+            dir={dir}
+            care={care}
+            because={because}
+            src={receiptSrc}
+            failed={receiptFailed}
+            onBack={() => setStep("place")}
+            onSend={send}
             sending={sending}
             error={error}
             stepNo={stepNo}
@@ -285,7 +364,7 @@ export default function KioskFlow() {
             <Logo />
             <div className="relative flex flex-1 flex-col items-center justify-center text-center">
               <h1 className="kiosk-hero is-compact">Take your printed worry</h1>
-              <Printing />
+              <Printing src={receiptSrc} />
             </div>
             <div className="relative flex justify-center pb-[clamp(2rem,9vh,5rem)]">
               <button type="button" className="kiosk-btn min-w-[12em]" onClick={reset}>
@@ -355,6 +434,70 @@ function Steps({ current, light = false }: { current: number; light?: boolean })
         />
       ))}
     </div>
+  );
+}
+
+/* ---- check your receipt -------------------------------------------- */
+
+/**
+ * Their receipt as it will print, drawn from their words before anything is
+ * saved, so they can check it and go back to change it. Nothing is sent until
+ * "Print and send".
+ */
+function Preview({
+  dir, care, because, src, failed, onBack, onSend, sending, error, stepNo,
+}: {
+  dir: number; care: string; because: string; src: string | null; failed: boolean;
+  onBack: () => void; onSend: () => void; sending: boolean; error: string | null; stepNo: number;
+}) {
+  return (
+    <Page dir={dir} className="kiosk-on-orb">
+      <Logo />
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-[1.2em] text-center">
+        <h1 className="kiosk-hero is-compact">Here&apos;s your receipt</h1>
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          {src ? (
+            // a slip of receipt paper, torn zigzag top and bottom, settling in at a slight tilt
+            <motion.div
+              className="kiosk-slip-shadow"
+              initial={{ opacity: 0, y: 30, rotate: 0 }}
+              animate={{ opacity: 1, y: 0, rotate: -2 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="kiosk-slip">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt={`Your receipt: I #divedeep about ${care.trim()}${because.trim() ? `, because ${because.trim()}` : ""}`}
+                  className="block max-h-[52vh] w-auto"
+                />
+              </div>
+            </motion.div>
+          ) : (
+            <p className="kiosk-body" role="status">
+              {failed ? "The preview didn't load, but your receipt will still print." : "Drawing your receipt…"}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="relative z-10 pb-[clamp(1rem,4vh,2rem)] px-[clamp(1.25rem,5vw,4rem)]">
+        {error && (
+          <p className="kiosk-body mb-3 text-center !text-white" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="flex items-center justify-between gap-4">
+          <button type="button" className="kiosk-btn-ghost" onClick={onBack} disabled={sending}>
+            Back
+          </button>
+          <button type="button" className="kiosk-btn" onClick={onSend} disabled={sending}>
+            Print and send
+          </button>
+        </div>
+      </div>
+      <Steps current={stepNo} light />
+    </Page>
   );
 }
 
@@ -825,24 +968,30 @@ function Place({
 
 /* ---- the print sliding out ---------------------------------------- */
 
-function Printing() {
+function Printing({ src }: { src: string | null }) {
   const reduce = useReducedMotion();
   return (
-    <div className="relative my-[1.6em] flex flex-col items-center" aria-label="Your print is coming out" role="img">
+    <div className="relative my-[1.6em] flex flex-col items-center" aria-label="Your receipt is printing" role="img">
       {/* the printer slot */}
       <div className="relative z-10 h-[18px] w-[min(30vh,250px)] rounded-full bg-[#d9dee4] shadow-[inset_0_2px_5px_rgba(15,23,42,0.18)]" />
-      {/* paper feeds down out of the slot */}
-      <div className="relative -mt-[9px] h-[min(36vh,310px)] w-[min(24vh,200px)] overflow-hidden">
+      {/* their receipt feeds down out of the slot, as long as it takes the printer */}
+      <div className="kiosk-slip-shadow relative -mt-[9px] h-[min(44vh,400px)] overflow-hidden">
         <motion.div
-          className="absolute inset-x-0 top-0 rounded-b-md bg-white shadow-[0_14px_34px_rgba(15,23,42,0.18)]"
+          className="h-full"
           initial={{ y: reduce ? "0%" : "-100%" }}
           animate={{ y: "0%" }}
-          transition={{ duration: reduce ? 0 : 5, ease: [0.45, 0, 0.55, 1], delay: 0.4 }}
-          style={{ height: "100%" }}
+          transition={{ duration: reduce ? 0 : 6, ease: [0.45, 0, 0.55, 1], delay: 0.4 }}
         >
-          {/* the dive deep print template */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/kiosk/print-template.jpg" alt="" className="h-full w-full rounded-b-md object-cover object-top" />
+          {src ? (
+            <div className="kiosk-slip is-printing h-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" className="block h-full w-auto" />
+            </div>
+          ) : (
+            // the receipt is still being drawn (or couldn't be): the blank template stands in
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src="/kiosk/print-template.jpg" alt="" className="h-full w-[min(24vh,200px)] rounded-b-md object-cover object-top" />
+          )}
         </motion.div>
       </div>
     </div>

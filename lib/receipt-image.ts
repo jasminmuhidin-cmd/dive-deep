@@ -124,7 +124,7 @@ const answer = (text: string, prompt: RegExp) => text.trim().replace(prompt, "")
  * ASCII art, "because …" with their second (if they gave one), then the
  * Dive Deep footer. Everything runs edge to edge — no white border round it.
  */
-export async function renderReceiptPng(input: ReceiptInput): Promise<Buffer> {
+export async function renderReceiptPng(input: ReceiptInput, { scale = 1 }: { scale?: number } = {}): Promise<Buffer> {
   const { top, bottom } = await loadAssets();
   const width = top.width;
   const textW = width - SIDE - SIDE_RIGHT;
@@ -148,11 +148,13 @@ export async function renderReceiptPng(input: ReceiptInput): Promise<Buffer> {
     (wrapped[1] ? ART_GAP + blockH(wrapped[1]) : 0) +
     FOOT_GAP +
     bottom.height;
-  const canvas = createCanvas(width, Math.ceil(height));
+  // laid out at full size, drawn at `scale` (smaller for an on-screen preview)
+  const canvas = createCanvas(Math.round(width * scale), Math.ceil(height * scale));
   const ctx = canvas.getContext("2d");
+  ctx.scale(scale, scale);
   // the footer art is transparent; the sticker itself is white
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, width, canvas.height);
+  ctx.fillRect(0, 0, width, height);
 
   ctx.fillStyle = "#000000";
   ctx.font = `${size}px "${FONT}"`;
