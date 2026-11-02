@@ -119,7 +119,9 @@ const fragmentShader = /* glsl */ `
 
   uniform float uTime;
   uniform float uAspect;
-  uniform vec3 uDark, uMedium, uLight;   // stops in HSL (h,s,l ∈ 0–1)
+  uniform vec3 uDark, uMedium, uLight;   // light stops in HSL (h,s,l ∈ 0–1): only in the peeking patches
+  uniform vec3 uDarkA, uMediumA, uLightA;   // accessible stops (white text ≥ ~4:1): most of the screen
+  uniform float uPatchLo, uPatchHi, uPatchScale, uPatchSpeed, uPatchStr, uTextCalmR;
   uniform float uHueSwing;
   uniform float uCycle, uDrift;
   uniform float uFishSchools, uFishPer, uFishSpeed, uFishSize, uFishA;
@@ -131,6 +133,7 @@ const fragmentShader = /* glsl */ `
   uniform float uSurfSize, uSurfA, uSurfGlow, uSurfBlur;
   uniform vec4 uSurfFish[${MAX_SPOTS}];     // x, y (aspect space), heading (rad), swim phase
   uniform vec2 uPoolR;
+  uniform float uTextContrast;   // white-text contrast floor near thoughts
   uniform sampler2D uFishSmall;         // Saskia frilly fish, soft (background / rising)
   uniform sampler2D uFishLarge;         // same fish, crisp (surfaced)
 
@@ -200,14 +203,23 @@ const fragmentShader = /* glsl */ `
 
   // Palette walk: a seamless loop dark → medium → light → medium → dark.
   //   k = ½ − ½·cos(2πc)   (0 = dark, ½ = medium, 1 = light)
-  vec3 paletteHsl(float c) {
+  vec3 paletteHslS(float c, vec3 sd, vec3 sm, vec3 sl) {
     float k = 0.5 - 0.5 * cos(TAU * c);
-    vec3 hsl = k < 0.5 ? mixHsl(uDark, uMedium, smoothstep(0.0, 0.5, k))
-                       : mixHsl(uMedium, uLight, smoothstep(0.5, 1.0, k));
+    vec3 hsl = k < 0.5 ? mixHsl(sd, sm, smoothstep(0.0, 0.5, k))
+                       : mixHsl(sm, sl, smoothstep(0.5, 1.0, k));
     hsl.x = fract(hsl.x + uHueSwing * sin(TAU * 2.0 * c));
     return hsl;
   }
+  vec3 paletteHsl(float c) { return paletteHslS(c, uDarkA, uMediumA, uLightA); }
   vec3 paletteAt(float c) { return hsl2rgb(paletteHsl(c)); }
+
+  // ---- readable water under text -----------------------------------------
+  // WCAG relative luminance (sRGB → linear).
+  float relLum(vec3 c) {
+    vec3 l = mix(c / 12.92, pow((max(c, 0.0) + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
+    return dot(l, vec3(0.2126, 0.7152, 0.0722));
+  }
+
 
   // ---- Mandy Lai-style soft colour clouds, in blues ----------------------
   // Three big gaussian clouds drift very slowly. Each is the local gradient
@@ -229,10 +241,10 @@ const fragmentShader = /* glsl */ `
   //   5 min  back to the start (seamless).
   // The blend runs mostly top → bottom with a slight diagonal and a soft
   // S-curve, plus the faint broad swell so hand waves stay readable.
-  vec3 background(vec2 uv) {
+  vec3 bgFrom(vec2 uv, vec3 sd, vec3 sm, vec3 sl) {
     vec2 s0 = vec2(uv.x, 1.0 - uv.y);
-    vec3 ha = paletteHsl(uCycle);
-    vec3 hb = paletteHsl(uCycle + 0.5);
+    vec3 ha = paletteHslS(uCycle, sd, sm, sl);
+    vec3 hb = paletteHslS(uCycle + 0.5, sd, sm, sl);
     vec3 a = hsl2rgb(ha);
     vec3 b = hsl2rgb(hb);
     float g = clamp(s0.y * 0.85 + s0.x * 0.15, 0.0, 1.0);
@@ -253,6 +265,39 @@ const fragmentShader = /* glsl */ `
     float swell = noise(vec2(uv.x * 1.2 + t * 0.4, uv.y * 0.5 - t)) - 0.5;
     col *= 1.0 + swell * 0.08;
     return col;
+  }
+
+  // ---- light gradients: where the original light blues show through ----
+  // Most of the water uses the accessible deep stops. Three very broad,
+  // slow sine swells crossing at different angles add up to a smooth field;
+  // where they meet, the water eases into the original light aqua and back
+  // out again — wide soft gradients drifting across, no edges or clouds.
+  float lightPatch(vec2 uv) {
+    float t = uTime * uPatchSpeed;
+    vec2 p = vec2(uv.x * uAspect, uv.y) * uPatchScale;
+    float g = sin(dot(p, vec2(0.92, 0.39)) * 2.1 + t)
+            + sin(dot(p, vec2(-0.48, 0.88)) * 1.7 - t * 0.83 + 1.7)
+            + sin(dot(p, vec2(0.21, -0.98)) * 2.6 + t * 0.61 + 4.2);
+    float n = g / 6.0 + 0.5;                         // 0–1, smooth everywhere
+    return smoothstep(uPatchLo, uPatchHi, n);
+  }
+  // 0 near a thought that is showing (light gaps there slowly close), 1 elsewhere.
+  // A wide, soft falloff that only thins the patches — never a visible shape.
+  float textCalm(vec2 s0) {
+    float k = 1.0;
+    for (int i = 0; i < ${MAX_SPOTS}; i++) {
+      vec4 sp = uSpots[i];
+      if (sp.w <= 0.001) continue;
+      vec2 d = (s0 - sp.xy) * vec2(uAspect, 1.0) / uTextCalmR;
+      k *= 1.0 - sp.w * exp(-dot(d, d));
+    }
+    return k;
+  }
+  vec3 background(vec2 uv) {
+    vec3 deep = bgFrom(uv, uDarkA, uMediumA, uLightA);
+    float m = lightPatch(uv) * uPatchStr * textCalm(vec2(uv.x, 1.0 - uv.y));
+    if (m <= 0.001) return deep;
+    return mix(deep, bgFrom(uv, uDark, uMedium, uLight), m);
   }
 
   // ---- ambient fish schools (deep, decorative, NON-interactive) ----------
@@ -637,6 +682,22 @@ const fragmentShader = /* glsl */ `
       col = mix(col, lineCol, c0 * uContourA * uPresence * textClear);
     }
 
+    // ---- readability floor right under thoughts ----------------------------
+    // The deep water already passes for white text; this only tones down
+    // brief highlights (wave light, sheen, dots) close to the words, by
+    // scaling brightness — no shape, no colour change.
+    {
+      float near = 1.0 - textCalm(s);
+      if (near > 0.001) {
+        float tY = 1.05 / uTextContrast - 0.05;
+        float Y = relLum(col);
+        if (Y > tY) {
+          vec3 lin = pow(max(col, 0.0), vec3(2.2)) * (tY / Y);
+          col = mix(col, pow(lin, vec3(1.0 / 2.2)), near);
+        }
+      }
+    }
+
     // ---- tapped thoughts: one surfaced fish each (no backdrop behind text) ---
     for (int i = 0; i < ${MAX_SPOTS}; i++) {
       vec2 sf = surfaceFish(pa, uSpots[i], uSurfFish[i]);
@@ -739,6 +800,14 @@ export function WaterPlane({
       uDark: { value: new THREE.Vector3(...rgbToHsl(B.dark)) },
       uMedium: { value: new THREE.Vector3(...rgbToHsl(B.medium)) },
       uLight: { value: new THREE.Vector3(...rgbToHsl(B.light)) },
+      uDarkA: { value: new THREE.Vector3(...rgbToHsl(B.accessible.dark)) },
+      uMediumA: { value: new THREE.Vector3(...rgbToHsl(B.accessible.medium)) },
+      uLightA: { value: new THREE.Vector3(...rgbToHsl(B.accessible.light)) },
+      uPatchLo: { value: B.lightPatches.lo },
+      uPatchHi: { value: B.lightPatches.hi },
+      uPatchScale: { value: B.lightPatches.scale },
+      uPatchSpeed: { value: B.lightPatches.speed },
+      uPatchStr: { value: B.lightPatches.strength },
       uHueSwing: { value: B.hueSwing / 360 },
       uFishSchools: { value: FX.fish.schools },
       uFishPer: { value: FX.fish.perSchool },
@@ -765,6 +834,8 @@ export function WaterPlane({
       uSurfBlur: { value: FX.surfaceFish.blur },
       uSurfFish: { value: Array.from({ length: MAX_SPOTS }, () => new THREE.Vector4()) },
       uPoolR: { value: new THREE.Vector2(...FX.tapThoughts.poolRadius) },
+      uTextContrast: { value: FX.tapThoughts.textContrast },
+      uTextCalmR: { value: FX.tapThoughts.calmRadius },
       uFishSmall: { value: fishSprites.small as THREE.Texture },
       uFishLarge: { value: fishSprites.large as THREE.Texture },
       uCycle: { value: 0 },
@@ -902,7 +973,12 @@ export function WaterPlane({
       const amt =
         ease((nowMs - use.born) / 1000 / SF.riseSec) *
         ease((use.until - nowMs) / 1000 / SF.sinkSec);
-      spotsU[i]!.set(use.x, use.y, amt, 0);
+      // Slower ease for the deepening water under the words.
+      const TT = FX.tapThoughts;
+      const deep =
+        ease((nowMs - use.born) / 1000 / TT.deepenInSec) *
+        ease((use.until - nowMs) / 1000 / TT.deepenOutSec);
+      spotsU[i]!.set(use.x, use.y, amt, deep);
 
       // The fish appears right beside the words, already swimming along its lane.
       const cx = use.x * aspect;

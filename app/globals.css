@@ -127,3 +127,45 @@ body {
 .ethereal-aura {
   position: relative;
 }
+
+/* ------------------------------------------------------------------------
+ * Home page: grainy aqua → blue gradient + white pill links.
+ * Stops chosen so white (wordmark, buttons) is ≥ 3.6 : 1 everywhere.
+ * ---------------------------------------------------------------------- */
+.home-bg {
+  background: linear-gradient(180deg, #3892a5 0%, #408ebc 55%, #6088c4 100%);
+}
+/* Fine film grain (SVG noise), kept faint so it never lightens the
+   background enough to affect contrast. */
+.home-grain {
+  opacity: 0.18;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.2 -0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.home-pill {
+  display: block;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #2d3651; /* 11.9 : 1 on white */
+  padding: 0.9rem 1.5rem;
+  text-align: center;
+  font-family: var(--ethereal-family);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.home-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(20, 40, 80, 0.25);
+}
+/* Navy + white double ring: visible on both the white pill and the blue. */
+.home-pill:focus-visible {
+  outline: 3px solid #1a2033;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px #ffffff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-pill { transition: none; }
+  .home-pill:hover { transform: none; }
+}

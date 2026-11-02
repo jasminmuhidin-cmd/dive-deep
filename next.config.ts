@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Hide the round "N" developer badge (bottom-left) while running
+  // `npm run dev`. Build/runtime errors still show. Never shown on Vercel.
+  devIndicators: false,
   serverExternalPackages: ["better-sqlite3", "@napi-rs/canvas"],
   // dive-deep-7 Electron (file://) polls / SSE these routes
   async headers() {

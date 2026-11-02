@@ -105,6 +105,29 @@ export const FX = {
     light: [0.671, 0.871, 0.929] as [number, number, number], //  #ABDEED
     cycleSeconds: 300,
     /**
+     * Accessibility: most of the water uses these deeper versions of the three
+     * stops (same hues), where white text reaches about 5 : 1 — WCAG AA for
+     * the 12pt thought text (normal text, 4.5 : 1), with a margin for wave
+     * light, sheen and colour clouds. The light stops above only show in
+     * lightPatches.
+     */
+    accessible: {
+      dark: [0.218, 0.451, 0.658] as [number, number, number], //   #3873A8 (5.0 : 1)
+      medium: [0.179, 0.47, 0.558] as [number, number, number], //  #2E788E (5.0 : 1)
+      light: [0.123, 0.472, 0.575] as [number, number, number], //  #1F7893 (5.0 : 1)
+    },
+    /**
+     * Broad, soft gradients where the original light blues show through,
+     * drifting slowly like light moving through water (no edges). Near a
+     * thought they slowly fade (tapThoughts.deepenInSec), so the words sit
+     * over deep water.
+     *   lo / hi  — where the light starts / reaches full: raise lo for less light
+     *   scale    — gradient size (lower = broader)
+     *   speed    — drift speed
+     *   strength — how light it gets at its brightest (0–1)
+     */
+    lightPatches: { lo: 0.7, hi: 1.0, scale: 1.0, speed: 0.06, strength: 0.7 },
+    /**
      * Where in the loop it starts (0–1). 0.5 = light aqua at the top fading to
      * the deeper blue at the bottom, like the Saskia site's surface.
      */
@@ -174,8 +197,8 @@ export const FX = {
     /** Faint while that area moves, easing up when still. */
     /** Raised from 0.15 / 0.25 so the body reads clearly on the wall. */
     /** Lowered from 0.75 / 0.95 so the text stays the main focus. */
-    alphaMoving: 0.125,
-    alphaStill: 0.225,
+    alphaMoving: 0.34,
+    alphaStill: 0.59,
     /**
      * A cell's dot appears only after its area has been still for
      * stillDelay + (random 0…stillStagger) seconds — dots arrive a few at a
@@ -234,7 +257,7 @@ export const FX = {
      */
     armDots: {
       /** Dot opacity right at the hand (bubbles brighten around a moving arm). */
-      alpha: 0.25,
+      alpha: 0.65,
       /** Radius of the bright area around the hand (screen-h units). */
       radius: 0.12,
       /** How long the dotted wake lingers after the hand passes (s). */
@@ -501,7 +524,7 @@ export const FX = {
     /** Body half-length (screen heights); further schools are drawn smaller. */
     size: 0.0065,
     /** Translucent white: how much white is mixed in (very faint). */
-    alpha: 0.11,
+    alpha: 0.13,
   },
 
   /**
@@ -536,6 +559,19 @@ export const FX = {
     cooldownMs: 450,
     /** Area around each thought kept free of sparkles (no darkening). */
     poolRadius: [0.34, 0.2] as [number, number],
+    /**
+     * Readability floor near the words: brief highlights (wave light, sheen,
+     * dots) close to a thought are toned down so white text keeps at least
+     * this contrast. 4.7 = WCAG AA for the 12pt text (4.5 : 1) with a margin
+     * (3.2 would be enough only for large text, ≥ 14pt bold).
+     */
+    textContrast: 4.7,
+    /** How far around a thought the light gaps close (screen heights, soft). */
+    calmRadius: 0.22,
+    /** Seconds for nearby light gaps to close when a thought appears, and to
+     * reopen as it leaves. */
+    deepenInSec: 4,
+    deepenOutSec: 2,
   },
 
   /**

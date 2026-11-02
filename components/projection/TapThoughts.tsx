@@ -236,7 +236,10 @@ function ThoughtText({ thought, quick }: { thought: Shown; quick: boolean }) {
           alignItems: "center",
           // Lines sit a little apart, like words drifting on the water.
           gap: "0.3em",
-          fontSize: "10pt",
+          // 12pt bold (16px) is "normal" text in WCAG → needs 4.5 : 1. The
+          // deep water is set for that (FX.background.accessible) and the
+          // readability floor near the words is FX.tapThoughts.textContrast.
+          fontSize: "12pt",
           lineHeight: 1.3,
           color: "rgb(255, 255, 255)",
           // Bold for readability on the light blues (the font has one weight,
