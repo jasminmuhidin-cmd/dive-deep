@@ -1,0 +1,152 @@
+/* The archive dive's own styles, loaded only on /gallery */
+/* Small labels on the dive step back a touch in size, spacing and tone */
+.dive-eyebrow {
+  font-size: 0.875em;
+  letter-spacing: 0.06em;
+  opacity: 0.8;
+}
+
+@keyframes dive-tail-3d {
+  0%, 50%, 100% { transform: scaleX(1) skewY(0deg); }
+  25% { transform: scaleX(0.55) skewY(-7deg); }
+  75% { transform: scaleX(0.55) skewY(7deg); }
+}
+@keyframes dive-yaw {
+  0%, 100% { transform: rotateY(-9deg); }
+  50% { transform: rotateY(9deg); }
+}
+@keyframes dive-turn {
+  0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
+  30% { transform: rotateY(24deg) rotateX(4deg); }
+  70% { transform: rotateY(-18deg) rotateX(-3deg); }
+}
+@keyframes dive-bob-small {
+  0%, 100% { transform: translateY(-1.5px); }
+  50% { transform: translateY(1.5px); }
+}
+@keyframes dive-lure-sway {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(7deg); }
+}
+@keyframes dive-sub-bob {
+  0%, 100% { transform: translateY(-3px) rotate(-1.5deg); }
+  50% { transform: translateY(3px) rotate(1.5deg); }
+}
+@keyframes dive-prop {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.15); }
+}
+@keyframes dive-sub-bubble {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { transform: translate(10px, -30px) scale(1.2); opacity: 0; }
+}
+
+/* A fish crossing its stretch of water head first, climbing or sinking a little (--rise),
+   turning, and swimming back.
+   --face is 1 for a fish facing left, -1 for one mirrored to face right. */
+@keyframes dive-swim {
+  0%, 100% { transform: translate(0, 0) scaleX(var(--face)); }
+  46% { transform: translate(calc(var(--swim) * var(--face) * -1), var(--rise, 0px)) scaleX(var(--face)); }
+  50% { transform: translate(calc(var(--swim) * var(--face) * -1), var(--rise, 0px)) scaleX(calc(var(--face) * -1)); }
+  96% { transform: translate(0, 0) scaleX(calc(var(--face) * -1)); }
+}
+@keyframes dive-ripple {
+  0% { transform: scale(0.06); opacity: 0; }
+  8% { opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+@keyframes dive-ripple-still {
+  0%, 100% { transform: scale(var(--ring)); opacity: 1; }
+  50% { transform: scale(calc(var(--ring) * 1.03)); opacity: 0.8; }
+}
+@keyframes dive-fin {
+  0%, 100% { transform: rotate(-10deg) scaleY(0.9); }
+  50% { transform: rotate(12deg) scaleY(1.05); }
+}
+@keyframes dive-sway {
+  0%, 100% { transform: rotate(-5deg) skewX(-3deg); }
+  50% { transform: rotate(6deg) skewX(4deg); }
+}
+@keyframes dive-drift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(calc(var(--swim) * 0.35), -16px); }
+  50% { transform: translate(calc(var(--swim) * 0.6), 4px); }
+  75% { transform: translate(calc(var(--swim) * 0.25), -10px); }
+}
+@keyframes dive-flipper {
+  0%, 100% { transform: rotate(-14deg); }
+  50% { transform: rotate(16deg); }
+}
+@keyframes dive-pulse {
+  0%, 100% { transform: scale(1, 1); }
+  40% { transform: scale(1.06, 0.86); }
+  70% { transform: scale(0.97, 1.04); }
+}
+@keyframes dive-undulate {
+  0%, 100% { transform: skewY(-5deg) scaleX(0.97); }
+  50% { transform: skewY(5deg) scaleX(1.02); }
+}
+@keyframes dive-flap {
+  0%, 100% { transform: rotate(-16deg); }
+  50% { transform: rotate(10deg); }
+}
+@keyframes dive-flap-r {
+  0%, 100% { transform: rotate(16deg); }
+  50% { transform: rotate(-10deg); }
+}
+@keyframes dive-orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes dive-current {
+  to { stroke-dashoffset: -58; }
+}
+
+/* Held still (reduced motion), a swimmer rests facing its own way */
+.dive-swim {
+  transform: scaleX(var(--face, 1));
+  animation: dive-swim var(--swim-dur, 30s) ease-in-out var(--swim-delay, 0s) infinite;
+}
+/* Held still, ripples rest as concentric rings */
+.dive-ripple, .dive-ripple-once, .dive-ripple-still {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(var(--ring, 1));
+  opacity: 1;
+}
+.dive-current { animation: dive-current 5s linear infinite; }
+.dive-orbit { animation: dive-orbit 60s linear infinite; }
+.dive-drift { animation: dive-drift var(--swim-dur, 30s) ease-in-out var(--swim-delay, 0s) infinite; }
+.dive-flipper { animation: dive-flipper 2s ease-in-out infinite; }
+.dive-pulse { animation: dive-pulse 1.8s ease-in-out infinite; }
+.dive-undulate { animation: dive-undulate 1.6s ease-in-out infinite; }
+.dive-flap { animation: dive-flap 1.6s ease-in-out infinite; }
+.dive-flap-r { animation: dive-flap-r 1.6s ease-in-out infinite; }
+.dive-ripple { animation: dive-ripple 6s cubic-bezier(0.2, 0.6, 0.4, 1) infinite; }
+.dive-ripple-once { animation: dive-ripple 2.4s cubic-bezier(0.15, 0.5, 0.35, 1) 1 both; }
+.dive-ripple-still { animation: dive-ripple-still 7s ease-in-out infinite; }
+.dive-fin { animation: dive-fin 1.4s ease-in-out infinite; }
+.dive-sway {
+  animation: dive-sway 6s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+.dive-sub-bob { animation: dive-sub-bob 3.2s ease-in-out infinite; }
+.dive-prop { animation: dive-prop 0.4s linear infinite; }
+.dive-sub-bubble { animation: dive-sub-bubble 1.6s ease-out infinite; }
+.dive-tail-3d { animation: dive-tail-3d 0.9s linear infinite; }
+.dive-yaw { animation: dive-yaw 1s ease-in-out infinite; transform-style: preserve-3d; }
+.dive-turn { animation: dive-turn 8s ease-in-out infinite; transform-style: preserve-3d; }
+.dive-bob-small { animation: dive-bob-small 2.2s ease-in-out infinite; }
+.dive-lure-sway { animation: dive-lure-sway 4.5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dive-tail-3d, .dive-yaw, .dive-turn, .dive-bob-small, .dive-lure-sway,
+  .dive-sub-bob, .dive-prop, .dive-sub-bubble,
+  .dive-swim, .dive-ripple, .dive-ripple-once, .dive-ripple-still, .dive-fin, .dive-sway,
+  .dive-drift, .dive-flipper, .dive-pulse, .dive-undulate, .dive-flap, .dive-flap-r,
+  .dive-current, .dive-orbit {
+    animation: none;
+  }
+  /* a splash only makes sense moving */
+  .dive-ripple-once { display: none; }
+}

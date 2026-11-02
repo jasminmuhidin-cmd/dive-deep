@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   // `npm run dev`. Build/runtime errors still show. Never shown on Vercel.
   devIndicators: false,
   serverExternalPackages: ["better-sqlite3", "@napi-rs/canvas"],
+  // the archive dive used to live at /mobile; old links (with their ?thought=) still land on it
+  async redirects() {
+    return [{ source: "/mobile", destination: "/gallery", permanent: true }];
+  },
   // dive-deep-7 Electron (file://) polls / SSE these routes
   async headers() {
     return [
