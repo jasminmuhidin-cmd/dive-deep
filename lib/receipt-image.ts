@@ -20,10 +20,12 @@ const MAX_LINES = 4;
 const MAX_SIZE = 440;
 const MIN_SIZE = 90;
 const LINE_HEIGHT = 1.02;
-/** The words line up with the edges of the ASCII art above them, and sit as far in from the top */
+/** The words run exactly as wide as the ASCII art's ink (49px in on the left, 61px on the right), and sit 49px down from the top */
 const SIDE = 49;
-/** Space between each block of words and the artwork either side of it */
-const GAP = 240;
+const SIDE_RIGHT = 61;
+/** Space between the words and the ASCII art, and before the footer */
+const ART_GAP = 140;
+const FOOT_GAP = 240;
 
 let assets: Promise<{ top: Image; bottom: Image }> | null = null;
 
@@ -83,25 +85,25 @@ function blockHeight(ctx: SKRSContext2D, lines: string[][], size: number) {
 }
 
 /**
- * Lines set edge to edge, `y` at the top of the ink: every line but the last
- * is justified across the full width, the gaps between words widening to fill
- * it, and the last sits left.
+ * Every line justified edge to edge, last line included, `y` at the top of
+ * the ink: the first letter's ink starts exactly at `x`, the last word's ink
+ * ends exactly at `x + width`, and the gaps between words widen to fill it.
+ * A line of a single word can't spread, so it sits at the left edge.
  */
 function drawBlock(ctx: SKRSContext2D, lines: string[][], x: number, y: number, width: number, size: number) {
   const { rise } = inkExtent(ctx);
   lines.forEach((words, i) => {
-    const top = y + rise + i * size * LINE_HEIGHT;
-    const last = i === lines.length - 1;
-    if (last || words.length === 1) {
-      ctx.fillText(words.join(" "), x, top);
-      return;
-    }
-    const inked = words.reduce((sum, w) => sum + ctx.measureText(w).width, 0);
-    const gap = (width - inked) / (words.length - 1);
+    const baseline = y + rise + i * size * LINE_HEIGHT;
+    const ink = words.map((w) => {
+      const m = ctx.measureText(w);
+      return { word: w, before: m.actualBoundingBoxLeft, width: m.actualBoundingBoxLeft + m.actualBoundingBoxRight };
+    });
+    const gap =
+      words.length > 1 ? (width - ink.reduce((sum, w) => sum + w.width, 0)) / (words.length - 1) : 0;
     let left = x;
-    for (const word of words) {
-      ctx.fillText(word, left, top);
-      left += ctx.measureText(word).width + gap;
+    for (const w of ink) {
+      ctx.fillText(w.word, left + w.before, baseline);
+      left += w.width + gap;
     }
   });
 }
@@ -125,7 +127,7 @@ const answer = (text: string, prompt: RegExp) => text.trim().replace(prompt, "")
 export async function renderReceiptPng(input: ReceiptInput): Promise<Buffer> {
   const { top, bottom } = await loadAssets();
   const width = top.width;
-  const textW = width - SIDE * 2;
+  const textW = width - SIDE - SIDE_RIGHT;
 
   const care = answer(input.care, /^i\s+care\s+about\b[\s.…]*/i);
   const because = answer(input.because ?? "", /^(i\s+care\s+)?because\b[\s.…]*/i);
@@ -139,7 +141,13 @@ export async function renderReceiptPng(input: ReceiptInput): Promise<Buffer> {
   const blockH = (lines: string[][]) => blockHeight(measure, lines, size);
 
   const height =
-    SIDE + blockH(wrapped[0]) + GAP + top.height + (wrapped[1] ? GAP + blockH(wrapped[1]) : 0) + GAP + bottom.height;
+    SIDE +
+    blockH(wrapped[0]) +
+    ART_GAP +
+    top.height +
+    (wrapped[1] ? ART_GAP + blockH(wrapped[1]) : 0) +
+    FOOT_GAP +
+    bottom.height;
   const canvas = createCanvas(width, Math.ceil(height));
   const ctx = canvas.getContext("2d");
   // the footer art is transparent; the sticker itself is white
@@ -152,15 +160,15 @@ export async function renderReceiptPng(input: ReceiptInput): Promise<Buffer> {
 
   let y = SIDE;
   drawBlock(ctx, wrapped[0], SIDE, y, textW, size);
-  y += blockH(wrapped[0]) + GAP;
+  y += blockH(wrapped[0]) + ART_GAP;
   ctx.drawImage(top, 0, y);
   y += top.height;
   if (wrapped[1]) {
-    y += GAP;
+    y += ART_GAP;
     drawBlock(ctx, wrapped[1], SIDE, y, textW, size);
     y += blockH(wrapped[1]);
   }
-  y += GAP;
+  y += FOOT_GAP;
   ctx.drawImage(bottom, 0, y);
 
   return canvas.toBuffer("image/png");
