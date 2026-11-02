@@ -44,3 +44,6 @@ next-env.d.ts
 /data/*.db
 /data/*.db-*
 /data/prints/
+
+# TouchDesigner experiments (MediaPipe.tox is 187 MB, over GitHub's 100 MB limit)
+/touchdesigner/

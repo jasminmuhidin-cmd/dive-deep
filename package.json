@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "fetch-model": "node scripts/fetch-mediapipe-model.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.9",

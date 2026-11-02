@@ -3,20 +3,30 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import type { ThoughtPlacement } from "./useThoughts";
+import { FX } from "./fx/fxConfig";
+import type { ClearZone } from "./fx/clearZones";
 
-const REVEAL_MS = 5000;
-const VISIBLE_COUNT = 6;
+const REVEAL_MS = 7000;
+/** Reveal fade-in / fade-out (ms). */
+const REVEAL_IN_MS = 1400;
+const REVEAL_OUT_MS = 1100;
+const VISIBLE_COUNT = 10;
 const HOLD_MS = 16000;
 const FADE_MS = 2800;
 
 /** Fixed screen slots — keeps taps comfortably apart */
 const SLOTS: { x: number; y: number }[] = [
-  { x: 0.2, y: 0.22 },
-  { x: 0.55, y: 0.2 },
-  { x: 0.8, y: 0.28 },
-  { x: 0.25, y: 0.5 },
-  { x: 0.72, y: 0.55 },
-  { x: 0.48, y: 0.74 },
+  // Staggered 3 / 2 / 3 / 2 rows: ten thoughts, each with room to drift.
+  { x: 0.17, y: 0.15 },
+  { x: 0.5, y: 0.13 },
+  { x: 0.83, y: 0.16 },
+  { x: 0.33, y: 0.37 },
+  { x: 0.68, y: 0.38 },
+  { x: 0.16, y: 0.6 },
+  { x: 0.5, y: 0.59 },
+  { x: 0.84, y: 0.61 },
+  { x: 0.33, y: 0.82 },
+  { x: 0.67, y: 0.83 },
 ];
 
 export type ActivePrompt = {
@@ -31,6 +41,27 @@ type SlotState = {
   thought: ThoughtPlacement;
   opacity: number;
 };
+
+/**
+ * Suspended drift for a teaser: two slow, incommensurate sines per axis
+ * (so the path never visibly repeats) plus a gentle rocking rotation.
+ * Shared by the canvas painter and the invisible tap targets so they stay
+ * aligned. Periods are ~2–6 minutes: felt more than seen.
+ */
+function teaserPose(phase: number, tSec: number) {
+  return {
+    dx:
+      Math.sin(tSec * 0.05 + phase) * 0.03 +
+      Math.sin(tSec * 0.021 + phase * 2.1) * 0.015,
+    dy:
+      Math.cos(tSec * 0.041 + phase * 1.3) * 0.022 +
+      Math.sin(tSec * 0.017 + phase * 0.7) * 0.01,
+    /** radians, about ±8° */
+    rot:
+      Math.sin(tSec * 0.03 + phase * 1.7) * 0.11 +
+      Math.sin(tSec * 0.013 + phase * 0.4) * 0.035,
+  };
+}
 
 function wrapText(
   ctx: CanvasRenderingContext2D,
@@ -53,18 +84,53 @@ function wrapText(
   return lines.slice(0, 4);
 }
 
+let cachedFamily = "";
+/** Canvas text uses the same family stack as the DOM type (--ethereal-family). */
+function teaserFamily(): string {
+  if (cachedFamily) return cachedFamily;
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue("--ethereal-family")
+    .trim();
+  if (v) {
+    cachedFamily = v;
+    void document.fonts?.load(`400 30px ${v}`);
+  }
+  return cachedFamily || "Georgia, serif";
+}
+
 /**
  * Blurry teasers painted into a canvas so the water shader can distort them
  * with the same Larose displacement filter (in place — not moved as boxes).
  * Invisible DOM buttons sit on top for taps.
  */
+/** Stable 0.25–1 per thought: how far it rises when the water is stirred. */
+function thoughtLift(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+  const u = ((h >>> 0) % 1000) / 1000;
+  return u < 0.45 ? 0.25 : 0.55 + u * 0.45;
+}
+
 export default function ThoughtOverlay({
   thoughts,
   active,
   now,
   onSelect,
   onTextTexture,
+  clearZonesRef,
+  readRef,
+  waveEnergy,
 }: {
+  /**
+   * Live hand-wave energy (0–1). The more visitors move their arms, the
+   * closer some hidden words drift toward the surface: a little brighter and
+   * less blurred — but never readable until tapped.
+   */
+  waveEnergy?: () => number;
+  /** Written every frame: where each thought floats (keeps dots off text). */
+  clearZonesRef?: React.MutableRefObject<ClearZone[]>;
+  /** Ids of thoughts a visitor has already revealed (no nudge for these). */
+  readRef?: React.RefObject<Set<string>>;
   thoughts: ThoughtPlacement[];
   active: ActivePrompt | null;
   now: number;
@@ -83,6 +149,8 @@ export default function ThoughtOverlay({
   slotsRef.current = slots;
   const activeRef = useRef(active);
   activeRef.current = active;
+  const waveEnergyRef = useRef(waveEnergy);
+  waveEnergyRef.current = waveEnergy;
 
   // Seed slots
   useEffect(() => {
@@ -134,6 +202,10 @@ export default function ThoughtOverlay({
     const scratch = document.createElement("canvas");
     scratch.width = 1024;
     scratch.height = 1024;
+    // Smoothed surfacing: rises over a few seconds of movement, sinks back
+    // slowly after it stops — never a jump.
+    let surf = 0;
+    let lastT = performance.now();
 
     const tick = () => {
       const canvas = canvasRef.current;
@@ -151,15 +223,36 @@ export default function ThoughtOverlay({
 
       const w = canvas.width;
       const h = canvas.height;
-      const tSec = performance.now() / 1000;
+      const tNow = performance.now();
+      const tSec = tNow / 1000;
       const act = activeRef.current;
+      const dtS = Math.min(0.25, (tNow - lastT) / 1000);
+      lastT = tNow;
+      const SU = FX.surfacing;
+      const e = Math.min(1, Math.max(0, waveEnergyRef.current?.() ?? 0));
+      surf += (e - surf) * (1 - Math.exp(-dtS / (e > surf ? SU.riseTau : SU.sinkTau)));
 
       ctx.clearRect(0, 0, w, h);
       sctx.clearRect(0, 0, w, h);
       sctx.textAlign = "center";
       sctx.textBaseline = "middle";
-      sctx.font =
-        "500 28px 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif";
+      // Same family as the DOM type (next/font exposes it as a CSS var).
+      sctx.font = `400 30px ${teaserFamily()}`; // ≈ 11pt on screen, matching the DOM text
+      (sctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = "-3px"; // −0.1em
+
+      const zones: ClearZone[] = [];
+      const CZ = FX.clearZones;
+      if (act && act.until > performance.now()) {
+        zones.push({
+          x: act.x,
+          y: act.y,
+          rx: CZ.revealed[0],
+          ry: CZ.revealed[1],
+          id: act.thoughtId,
+          kind: "revealed",
+          read: true,
+        });
+      }
 
       // Draw anonymous teasers sharp onto scratch, then blur hard into main
       for (let i = 0; i < slotsRef.current.length; i++) {
@@ -168,37 +261,55 @@ export default function ThoughtOverlay({
         if (act?.thoughtId === thought.id) continue;
 
         const slot = SLOTS[i]!;
-        const fx = Math.sin(tSec * 0.22 + thought.phase) * 0.012;
-        const fy = Math.cos(tSec * 0.17 + thought.phase * 1.3) * 0.01;
-        const cx = (slot.x + fx) * w;
-        const cy = (slot.y + fy) * h;
-        const alpha = 0.85 * slotState.opacity;
+        const pose = teaserPose(thought.phase, tSec);
+        const cx = (slot.x + pose.dx) * w;
+        const cy = (slot.y + pose.dy) * h;
+        // Barely-there: just a hint of words deep under the surface. They
+        // only become readable when tapped (the sharp DOM reveal).
+        // Some words (not all) drift up toward the surface with wave energy.
+        const lift = surf * thoughtLift(thought.id);
+        const alpha = (0.3 + SU.alphaGain * lift) * slotState.opacity;
         if (alpha < 0.02) continue;
 
         const lines = wrapText(sctx, thought.text, w * 0.22);
-        const lineH = 34;
+        const lineH = 37;
+        const read = readRef?.current?.has(thought.id) ?? false;
+        zones.push({
+          x: slot.x + pose.dx,
+          y: slot.y + pose.dy,
+          rx: CZ.teaser[0],
+          ry: CZ.teaser[1],
+          id: thought.id,
+          kind: "teaser",
+          read,
+        });
+
 
         sctx.save();
         sctx.globalAlpha = alpha;
-        sctx.fillStyle = "rgba(12, 70, 90, 0.95)";
-        sctx.shadowColor = "rgba(255, 255, 255, 0.45)";
-        sctx.shadowBlur = 14;
+        // Clean type: no glow, no shadow — the soft blur below is the only
+        // treatment, so the words read as if suspended in the water.
+        sctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+        sctx.translate(cx, cy);
+        sctx.rotate(pose.rot);
+        const sc = 1 + SU.scaleGain * lift;
+        sctx.scale(sc, sc);
         lines.forEach((line, li) => {
-          sctx.fillText(
-            line,
-            cx,
-            cy + (li - (lines.length - 1) / 2) * lineH,
-          );
+          sctx.fillText(line, 0, (li - (lines.length - 1) / 2) * lineH);
         });
         sctx.restore();
       }
 
       // Soft blur — readable as “text to tap”, not fully anonymous-opaque
       ctx.save();
-      ctx.filter = "blur(5px)";
+      // Blur thins a little as the words surface, but never below
+      // minBlurPx — still unreadable until tapped.
+      ctx.filter = `blur(${Math.max(SU.minBlurPx, 7 - (7 - SU.minBlurPx) * surf).toFixed(2)}px)`;
       ctx.globalAlpha = 0.88;
       ctx.drawImage(scratch, 0, 0);
       ctx.restore();
+
+      if (clearZonesRef) clearZonesRef.current = zones;
 
       // Revealed text is DOM-only (never painted here → no ripple warp)
       tex.needsUpdate = true;
@@ -292,18 +403,27 @@ export default function ThoughtOverlay({
     const remaining = active.until - now;
     if (remaining > 0) {
       const elapsed = REVEAL_MS - remaining;
+      // Slow, eased fade-in (and a gentler fade-out), so a revealed thought
+      // surfaces like something rising through water.
+      const ease = (t: number) => t * t * (3 - 2 * t);
       activeOpacity = 1;
-      if (elapsed < 280) activeOpacity = elapsed / 280;
-      else if (remaining < 800) activeOpacity = remaining / 800;
+      if (elapsed < REVEAL_IN_MS) activeOpacity = ease(Math.max(0, elapsed) / REVEAL_IN_MS);
+      else if (remaining < REVEAL_OUT_MS) activeOpacity = ease(remaining / REVEAL_OUT_MS);
     }
   }
+  // While fading in, the words also come into focus (blur 6px → 0) and
+  // rise a few pixels, then settle.
+  const revealBlur = (1 - activeOpacity) * 6;
+  const revealRise = (1 - activeOpacity) * 10;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[5] overflow-hidden">
       {/* Invisible hit targets — blurred text lives in the water shader */}
       {slots.map((slotState, i) => {
         const thought = slotState.thought;
-        const slot = SLOTS[i] ?? { x: thought.x, y: thought.y };
+        const base = SLOTS[i] ?? { x: thought.x, y: thought.y };
+        const pose = teaserPose(thought.phase, now / 1000);
+        const slot = { x: base.x + pose.dx, y: base.y + pose.dy };
         const isActive =
           active?.thoughtId === thought.id && activeOpacity > 0.02;
         if (isActive) return null;
@@ -319,6 +439,7 @@ export default function ThoughtOverlay({
               left: `${slot.x * 100}%`,
               top: `${slot.y * 100}%`,
               opacity: slotState.opacity,
+              rotate: `${pose.rot}rad`,
             }}
             onPointerDown={(e) => {
               e.stopPropagation();
@@ -336,30 +457,17 @@ export default function ThoughtOverlay({
         <div
           className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
           style={{
-            left: `${active.x * 100}%`,
-            top: `${active.y * 100}%`,
+            // Keep the whole text block (and its aura) on screen.
+            left: `clamp(min(15rem, 42vw), ${active.x * 100}%, calc(100% - min(15rem, 42vw)))`,
+            top: `clamp(5rem, ${active.y * 100}%, calc(100% - 5rem))`,
             opacity: activeOpacity,
+            filter: revealBlur > 0.05 ? `blur(${revealBlur.toFixed(2)}px)` : undefined,
+            marginTop: `${revealRise.toFixed(1)}px`,
           }}
         >
-          {/* Soft backlight behind the prompt */}
-          <div
-            aria-hidden
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{
-              width: "min(28rem, 85vw)",
-              height: "12rem",
-              background:
-                "radial-gradient(ellipse at center, rgba(255, 255, 255, 0.65) 0%, rgba(180, 235, 245, 0.4) 35%, rgba(100, 200, 220, 0.15) 60%, transparent 75%)",
-              filter: "blur(18px)",
-            }}
-          />
-          <p
-            className="relative max-w-[min(22rem,72vw)] px-5 py-4 text-center font-serif text-[18px] leading-snug text-[#063a4a] sm:text-[20px]"
-            style={{
-              textShadow:
-                "0 0 16px rgba(255, 255, 255, 0.9), 0 0 32px rgba(200, 240, 250, 0.7), 0 1px 2px rgba(255,255,255,0.5)",
-            }}
-          >
+          {/* Pure white Playfair with a soft aura. Legibility comes from the
+              water deepening beneath it (focus pool in the water shader). */}
+          <p className="ethereal-text ethereal-light ethereal-aura max-w-[min(22rem,72vw)] px-5 py-4 text-center">
             {active.text}
           </p>
         </div>

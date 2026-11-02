@@ -235,8 +235,8 @@ export default function GalleryView() {
                 {s.worry_text}
               </p>
               <p className="mt-3 text-xs text-mist/50">
-                Uncovered {s.uncover_count}{" "}
-                {s.uncover_count === 1 ? "time" : "times"}
+                Uncovered by {s.uncover_count}{" "}
+                {s.uncover_count === 1 ? "person" : "people"}
               </p>
             </button>
           ))}
@@ -311,15 +311,57 @@ export default function GalleryView() {
                 </>
               )}
               <p className="mt-6 font-mono text-xs text-warm-soft/45">
-                Released {new Date(selected.created_at).toLocaleString()}
-                {selected.is_claimed ? " · someone has stewarded this" : ""}
+                Uncovered by {selected.uncover_count}{" "}
+                {selected.uncover_count === 1 ? "person" : "people"}
               </p>
-              <Link
-                href={`/steward/${selected.id}`}
-                className="mt-8 inline-flex min-h-12 items-center rounded-full bg-sand px-5 py-3 text-navy transition hover:bg-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-seafoam"
-              >
-                Steward this thought
-              </Link>
+
+              <section className="mt-8 border-t border-warm-soft/15 pt-6">
+                <h3 className="font-mono text-[11px] uppercase tracking-[0.22em] text-warm-soft/60">
+                  Responses
+                  {responses.length > 0 ? ` · ${responses.length}` : ""}
+                </h3>
+                {responses.length === 0 ? (
+                  <p className="mt-3 text-sm leading-relaxed text-warm-soft/55">
+                    No responses yet. Leave one below.
+                  </p>
+                ) : (
+                  <ul className="mt-4 space-y-4">
+                    {responses.map((r) => (
+                      <li
+                        key={r.id}
+                        className="border-l border-ripple/35 pl-4"
+                      >
+                        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-warm-soft/45">
+                          {new Date(r.created_at).toLocaleString()}
+                        </p>
+                        <p className="mt-1 font-serif text-lg leading-relaxed text-foam">
+                          {r.response_text}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <label className="mt-5 block">
+                  <span className="sr-only">Leave a response</span>
+                  <textarea
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    placeholder="Leave a response…"
+                    className="w-full resize-none rounded-2xl border border-ripple/25 bg-ocean-deep/40 px-4 py-3 text-sm leading-relaxed text-foam placeholder:text-mist/40 focus:border-ripple/50 focus:outline-none"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={postResponse}
+                  disabled={posting || !responseText.trim()}
+                  className="mt-3 min-h-11 rounded-full border border-ripple/40 px-5 py-2 text-sm text-foam transition hover:border-ripple/70 disabled:opacity-40"
+                >
+                  {posting ? "Sending…" : "Send response"}
+                </button>
+              </section>
             </motion.article>
           </motion.div>
         )}

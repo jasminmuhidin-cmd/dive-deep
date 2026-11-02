@@ -73,3 +73,57 @@ body {
     radial-gradient(ellipse at 50% 90%, rgba(20, 122, 144, 0.35), transparent 50%),
     linear-gradient(165deg, #2d3651 0%, #1a2033 55%, #121826 100%);
 }
+
+/* ------------------------------------------------------------------------
+ * Ethereal projection type — MingLiU_HKSCS-ExtB, pure white, tracking −100.
+ *
+ * MingLiU_HKSCS-ExtB is a Windows system font (not on Google Fonts, and its
+ * licence doesn't allow serving it as a web font), so it is referenced with
+ * local(): the browser uses the copy installed on the installation PC.
+ * Its Latin glyphs are fixed-width (½ em each) and it has a single weight.
+ * Fallbacks: the other ExtB cuts, then Playfair Display (e.g. on a Mac).
+ * ---------------------------------------------------------------------- */
+@font-face {
+  font-family: "Ethereal Ming";
+  src:
+    local("MingLiU_HKSCS-ExtB"),
+    local("MingLiU-ExtB"),
+    local("PMingLiU-ExtB");
+  font-display: swap;
+}
+
+:root {
+  /* Tweak here. 11pt ≈ 14.7px; for a big projection try clamp(10pt, 0.85vw, 16pt). */
+  --ethereal-size: 11pt;
+  /* Tracking −100 (design-tool units = 1/1000 em) → −0.1em. */
+  --ethereal-tracking: -0.1em;
+  --ethereal-family: "Ethereal Ming", "MingLiU_HKSCS-ExtB", "MingLiU-ExtB",
+    var(--font-playfair-display), Georgia, serif;
+}
+
+.ethereal-text {
+  font-family: var(--ethereal-family);
+  font-weight: 400;
+  font-size: var(--ethereal-size);
+  letter-spacing: var(--ethereal-tracking);
+  word-spacing: 0.15em; /* tight tracking needs a touch more word gap */
+  line-height: 1.45;
+  /* Slightly faded white: calmer against the water, still clearly legible. */
+  color: rgba(255, 255, 255, 0.78);
+  font-kerning: normal;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  /* No glow: plain white type. */
+  text-shadow: none;
+}
+/* Kept for compatibility; MingLiU has one weight, so both map to 400. */
+.ethereal-light,
+.ethereal-regular {
+  font-family: var(--ethereal-family);
+  font-weight: 400;
+}
+
+/* Aura removed — class kept so existing markup still works. */
+.ethereal-aura {
+  position: relative;
+}
