@@ -133,6 +133,7 @@ body {
  * Stops chosen so white (wordmark, buttons) is ≥ 3.6 : 1 everywhere.
  * ---------------------------------------------------------------------- */
 .home-bg {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   background: linear-gradient(180deg, #3892a5 0%, #408ebc 55%, #6088c4 100%);
 }
 /* Fine film grain (SVG noise), kept faint so it never lightens the
@@ -149,10 +150,10 @@ body {
   color: #2d3651; /* 11.9 : 1 on white */
   padding: 0.9rem 1.5rem;
   text-align: center;
-  font-family: var(--ethereal-family);
-  font-size: 1.5rem;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 1.4rem;
   line-height: 1.2;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .home-pill:hover {
@@ -168,4 +169,290 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .home-pill { transition: none; }
   .home-pill:hover { transform: none; }
+}
+
+/* ------------------------------------------------------------------------
+ * Kiosk — clean, minimal UI: mostly white, easing into the projection's
+ * aqua → blue at the bottom, with a fine grain; near-black text; one deep
+ * blue (#123c6e) for actions; rounded white cards, no outlines. The
+ * projection's typeface, bold for headings.
+ *
+ * Contrast: #0f172a on white 17.9 : 1; secondary #475569 7.6 : 1;
+ * white on #123c6e 11.1 : 1.
+ * Everything is in em, so the Accessibility text size scales it together;
+ * the base size follows the screen and the steps are capped on small ones.
+ * ---------------------------------------------------------------------- */
+.kiosk {
+  --k: 1;
+  --base: clamp(13px, 0.42vw + 0.55vh + 5px, 18px);
+  --blue: #123c6e;
+  --ink: #0f172a;
+  --muted: #475569;
+  font-size: calc(var(--base) * var(--k));
+  color: var(--ink);
+  font-family: var(--font-averia-serif), "Averia Serif Libre", Georgia, serif;
+  font-weight: 400;
+  background: #eff1f1;
+  -webkit-tap-highlight-color: transparent;
+}
+.kiosk[data-size="1"] { --k: 1.14; }
+.kiosk[data-size="2"] { --k: 1.28; }
+@media (max-width: 820px), (max-height: 640px) {
+  .kiosk[data-size="1"] { --k: 1.1; }
+  .kiosk[data-size="2"] { --k: 1.18; }
+}
+/* plain off-white page with one large, softly blurred orb in the middle, in
+   the projection's blues (navy #0A2540 core, #3873A8 / #5692C7 blues, #60B3CC
+   aqua, #ABDEED edge). The corners stay off-white, so the black logo and the
+   Aa button sit on light. Text over the orb is white. */
+.kiosk-bg { overflow: hidden; background: #f1f3f5; }
+.kiosk-orb {
+  position: absolute; border-radius: 50%; transform: translate(-50%, -50%);
+  filter: blur(48px); /* very soft, so the orbs melt into each other */
+  animation: kiosk-orb 16s ease-in-out infinite alternate;
+}
+.kiosk-orb-main {
+  left: 50%; top: 46%;
+  width: min(136vw, 168vh); aspect-ratio: 1.3 / 1; /* wide, so text near the edges still sits on colour */
+  background:
+    radial-gradient(circle at 60% 40%, #0a2540 0%, #102e58 16%, rgba(16, 46, 88, 0) 38%),
+    radial-gradient(circle at 46% 47%, #1d4f8f 0%, #23599c 20%, rgba(35, 89, 156, 0) 48%),
+    radial-gradient(circle at 36% 62%, #3873a8 0%, #5692c7 24%, rgba(86, 146, 199, 0) 54%),
+    radial-gradient(closest-side at 50% 50%, #4c8abd 0%, #5692c7 40%, #60b3cc 62%, #abdeed 80%, rgba(171, 222, 237, 0.4) 90%, rgba(241, 243, 245, 0) 100%);
+}
+/* two smaller orbs that blend into the big one: each is shaded side to side
+   (not centre-out), with the side that touches the big orb in its edge colour,
+   so there is no seam. The right one drifts slowly up and down. */
+.kiosk-orb-tr, .kiosk-orb-bl {
+  width: min(56vw, 66vh); aspect-ratio: 1; filter: blur(56px); opacity: 0.78;
+  -webkit-mask-image: radial-gradient(closest-side, #000 20%, rgba(0, 0, 0, 0.6) 55%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 20%, rgba(0, 0, 0, 0.6) 55%, transparent 100%);
+}
+.kiosk-orb-tr {
+  left: 88%; top: 18%;
+  background: linear-gradient(90deg, #60b3cc 0%, #79a7cd 45%, #abdeed 100%);
+  animation: kiosk-orb-tr 18s ease-in-out infinite alternate;
+}
+.kiosk-orb-bl {
+  left: 12%; top: 86%;
+  background: linear-gradient(90deg, #c4e6f1 0%, #96c6e2 55%, #60b3cc 100%);
+  animation: kiosk-orb-bl 26s ease-in-out infinite alternate;
+}
+@keyframes kiosk-orb {
+  from { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  to { transform: translate(-48%, -52%) scale(1.03) rotate(6deg); }
+}
+@keyframes kiosk-orb-tr {
+  from { transform: translate(-50%, -42%); }
+  to { transform: translate(-50%, -64%); }
+}
+@keyframes kiosk-orb-bl {
+  from { transform: translate(-50%, -50%) scale(1); }
+  to { transform: translate(-42%, -56%) scale(1.05); }
+}
+/* each orb slowly changes colour: a second tint fades in and out over it */
+.kiosk-orb-main::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; opacity: 0;
+  animation: kiosk-orb-tint 20s ease-in-out infinite alternate;
+}
+.kiosk-orb-main::after { background: radial-gradient(circle at 38% 58%, #1f7893 0%, #2e788e 22%, rgba(46, 120, 142, 0) 52%); }
+@keyframes kiosk-orb-tint { from { opacity: 0; } to { opacity: 0.85; } }
+.kiosk-on-orb .kiosk-hero, .kiosk-on-orb .kiosk-h1 { color: #ffffff; text-shadow: 0 1px 14px rgba(10, 37, 64, 0.35); }
+.kiosk-on-orb .kiosk-small { color: rgba(255, 255, 255, 0.9); }
+/* on the dark orb and the water: main action solid white, Back a white outline */
+.kiosk-on-orb .kiosk-btn, .kiosk-on-water .kiosk-btn { background: #ffffff; color: var(--blue); box-shadow: 0 8px 20px rgba(10, 37, 64, 0.25); }
+.kiosk-on-orb .kiosk-btn:hover:not(:disabled), .kiosk-on-water .kiosk-btn:hover:not(:disabled) { background: #e8f0f8; }
+.kiosk-on-orb .kiosk-btn-ghost, .kiosk-on-water .kiosk-btn-ghost { background: transparent; color: #ffffff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85); }
+.kiosk-on-orb .kiosk-btn-ghost:hover, .kiosk-on-water .kiosk-btn-ghost:hover { background: rgba(255, 255, 255, 0.12); }
+.kiosk-grain::after {
+  content: ""; position: absolute; inset: 0; opacity: 0.3; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.2 -0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@keyframes kiosk-drift { from { transform: translate3d(-3%, -2%, 0) scale(1); } to { transform: translate3d(3%, 2%, 0) scale(1.05); } }
+.kiosk-easy { letter-spacing: 0.05em; word-spacing: 0.14em; }
+.kiosk-easy .kiosk-body, .kiosk-easy .kiosk-input, .kiosk-easy .kiosk-h1, .kiosk-easy .kiosk-hero { line-height: 1.7; }
+
+/* type */
+.kiosk-hero { text-wrap: balance; max-width: 16em; font-size: 3.8em; font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; transition: font-size 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+.kiosk-hero.is-compact { font-size: 2em; max-width: 18em; }
+.kiosk-optional { font-weight: 400; color: var(--muted); font-size: 0.7em; }
+.kiosk-float { animation: kiosk-float 7s ease-in-out infinite; }
+@keyframes kiosk-float { 0%, 100% { transform: translateY(-4px); } 50% { transform: translateY(4px); } }
+.kiosk-h1 { font-size: 1.85em; font-weight: 400; line-height: 1.2; letter-spacing: -0.02em; }
+.kiosk-body { font-size: 1.05em; line-height: 1.5; color: var(--muted); }
+.kiosk-small { font-size: 0.9em; color: var(--muted); }
+.kiosk-label { font-size: 1em; font-weight: 700; color: var(--ink); }
+
+/* text box: a white card, no outline */
+.kiosk-input {
+  display: block; width: 100%; resize: none; border: 0; border-radius: 24px;
+  background: #ffffff; box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+  padding: 1.1em 4em 1.1em 1.25em;
+  font: inherit; font-size: 1.08em; line-height: 1.5; color: var(--ink);
+}
+.kiosk-input::placeholder { color: #64748b; }
+.kiosk-input:focus { outline: none; box-shadow: 0 8px 28px rgba(15, 23, 42, 0.1), 0 0 0 3px rgba(18, 60, 110, 0.22); }
+.kiosk-mic {
+  position: absolute; right: 0.75em; bottom: 0.75em; display: grid; place-items: center;
+  width: 2.8em; height: 2.8em; min-width: 44px; min-height: 44px; border-radius: 9999px;
+  color: var(--blue); background: #edf3f9; transition: background 0.2s, color 0.2s;
+}
+.kiosk-mic:hover { background: #e0eaf4; }
+.kiosk-mic.is-on { background: var(--blue); color: #ffffff; animation: kiosk-pulse 1.4s ease-in-out infinite; }
+@keyframes kiosk-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(18, 60, 110, 0.35); } 50% { box-shadow: 0 0 0 10px rgba(18, 60, 110, 0); } }
+
+/* buttons */
+/* Back and Next share one size, so the pair is consistent */
+.kiosk-btn, .kiosk-btn-ghost {
+  min-width: 8.5em; border-radius: 9999px; min-height: max(3.1em, 44px);
+  font-size: 1.05em; font-weight: 400; letter-spacing: 0.01em;
+  transition: background 0.2s, transform 0.2s, opacity 0.2s, box-shadow 0.2s;
+}
+.kiosk-btn { padding: 0.6em 2em; background: var(--blue); color: #ffffff; box-shadow: 0 8px 20px rgba(18, 60, 110, 0.25); }
+.kiosk-btn:hover:not(:disabled) { background: #0e3159; }
+.kiosk-btn:active:not(:disabled) { transform: scale(0.98); }
+.kiosk-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+.kiosk-btn-ghost { padding: 0.6em 2em; color: var(--ink); background: #ffffff; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); }
+.kiosk-btn-ghost:hover { background: #f1f5fb; }
+.kiosk button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+/* accessibility: a round "Aa" button, bottom-right */
+/* accessibility: outlined figure when closed, filled button when open */
+.kiosk-a11y-btn {
+  display: grid; place-items: center;
+  width: max(2.7em, 44px); height: max(2.7em, 44px); border-radius: 9999px;
+  background: transparent; color: var(--ink); border: 2px solid var(--ink);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.kiosk-a11y-btn:hover { background: rgba(255, 255, 255, 0.25); }
+.kiosk-a11y-btn.is-open { background: var(--ink); color: #ffffff; }
+.kiosk-a11y-panel {
+  width: min(18em, 80vw); padding: 1.1em; border-radius: 24px;
+  background: #ffffff; color: var(--ink); font-size: 0.95em;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.16);
+  display: flex; flex-direction: column; gap: 0.75em;
+}
+.kiosk-a11y-title { font-weight: 700; }
+.kiosk-a11y-size { flex: 1; height: 2.4em; min-height: 44px; border-radius: 14px; background: #eef3fb; color: var(--ink); line-height: 1; font-weight: 700; }
+.kiosk-a11y-size.is-on { background: var(--blue); color: #ffffff; }
+.kiosk-a11y-toggle { display: flex; align-items: center; justify-content: space-between; gap: 1em; min-height: 44px; text-align: left; }
+.kiosk-switch { position: relative; flex: none; width: 3em; height: 1.7em; border-radius: 9999px; background: #cbd5e1; transition: background 0.2s; }
+.kiosk-switch::after { content: ""; position: absolute; top: 0.2em; left: 0.2em; width: 1.3em; height: 1.3em; border-radius: 9999px; background: #fff; transition: transform 0.2s; }
+.kiosk-switch.is-on { background: var(--blue); }
+.kiosk-switch.is-on::after { transform: translateX(1.3em); }
+.kiosk-a11y-close { align-self: flex-end; min-height: 44px; padding: 0.4em 1.3em; border-radius: 9999px; background: var(--blue); color: #fff; font-weight: 400; }
+
+/* loading */
+.kiosk-loading { display: flex; gap: 0.5em; }
+.kiosk-loading > span { width: 0.55em; height: 0.55em; border-radius: 9999px; background: var(--blue); animation: kiosk-load 1.2s ease-in-out infinite; }
+.kiosk-loading > span:nth-child(2) { animation-delay: 0.15s; }
+.kiosk-loading > span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes kiosk-load { 0%, 100% { opacity: 0.25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-4px); } }
+
+/* placement: the full thought, small, on a white card */
+.kiosk-thought {
+  text-wrap: balance; width: max-content; max-width: min(17em, 40vw);
+  color: var(--ink); font-size: 0.9em; font-weight: 700; line-height: 1.4; text-align: center;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+}
+.kiosk-thought.on-deep { color: #ffffff; text-shadow: 0 0 8px rgba(5, 20, 45, 0.45); }
+/* the words riding in on the wave (loading) */
+.kiosk-ride {
+  margin: 0; white-space: nowrap; color: var(--ink);
+  font-size: 1.25em; font-weight: 700;
+}
+.kiosk-drop { width: 0; height: 0; }
+.kiosk-drop > span {
+  position: absolute; left: -5em; top: -2.1em; width: 10em; height: 4.2em;
+  border: 1.5px solid rgba(255, 255, 255, 0.85); border-radius: 50%;
+  animation: kiosk-drop 2.4s ease-out forwards;
+}
+.kiosk-drop > span:last-child { animation-delay: 0.5s; opacity: 0; }
+@keyframes kiosk-drop { 0% { transform: scale(0.15); opacity: 0.8; } 100% { transform: scale(1.5); opacity: 0; } }
+.kiosk-floater { opacity: 0.8; animation: kiosk-float-around ease-in-out infinite alternate; }
+@keyframes kiosk-float-around {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-6vw, -3vh) rotate(8deg); }
+  100% { transform: translate(4vw, -6vh) rotate(-6deg); }
+}
+
+/* level names floating on the left of the water */
+.kiosk-levels { width: min(12em, 26vw); }
+.kiosk-zone {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.15em;
+  min-height: 48px; margin-left: -0.9em; padding: 0.45em 0.9em; text-align: left; color: #ffffff;
+  border-radius: 16px; border: 1.5px solid transparent; background: transparent;
+  transform: translateY(-50%);
+  animation: kiosk-zone-float 7s ease-in-out infinite;
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+@keyframes kiosk-zone-float { 0%, 100% { transform: translateY(calc(-50% - 4px)); } 50% { transform: translateY(calc(-50% + 4px)); } }
+.kiosk-zone-name { font-weight: 700; font-size: 1.05em; }
+.kiosk-zone-note { font-size: 0.85em; color: #e8f0f8; max-width: 11em; }
+/* the chosen level: a clear, button-like box appears around its label */
+.kiosk-zone.is-on {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 4px 16px rgba(15, 50, 90, 0.08);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.kiosk-hero.is-place { font-size: 2.2em; max-width: 26em; }
+
+.kiosk-wave { animation: kiosk-wave linear infinite; }
+@keyframes kiosk-wave { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.kiosk-light { animation: kiosk-light 30s ease-in-out infinite alternate; }
+@keyframes kiosk-light { from { transform: translateX(0); } to { transform: translateX(6%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .kiosk-orb, .kiosk-orb::after, .kiosk-float, .kiosk-light, .kiosk-wave, .kiosk-mic.is-on, .kiosk-floater, .kiosk-loading > span { animation: none; }
+}
+
+/* placement: the creatures */
+/* each creature rides a full-width row, so translateX(%) is a share of the screen */
+.kiosk-row { position: absolute; left: 0; width: 100%; height: 0; transform: translateX(var(--x0)); }
+.kiosk-row.is-swim, .kiosk-row.is-bob { animation-name: kiosk-roam; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+@keyframes kiosk-roam { from { transform: translateX(var(--x0)); } to { transform: translateX(var(--x1)); } }
+.kiosk-creature {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); opacity: 0.2;
+}
+/* swimmers face the way they travel: right on the way out, left on the way back.
+   The flip's cycle is two crossings, so SeaCreatures gives it twice the row's duration. */
+.kiosk-creature.is-swim { animation-name: kiosk-face; animation-timing-function: steps(1, end); animation-iteration-count: infinite; }
+@keyframes kiosk-face {
+  0% { transform: translate(-50%, -50%) scaleX(-1); }
+  50% { transform: translate(-50%, -50%) scaleX(1); }
+  100% { transform: translate(-50%, -50%) scaleX(1); }
+}
+.kiosk-creature.is-swim > svg { animation: kiosk-glide 5s ease-in-out infinite alternate; }
+@keyframes kiosk-glide { from { transform: translateY(-6%); } to { transform: translateY(6%); } }
+.kiosk-creature.is-bob { animation: kiosk-bob-y 6s ease-in-out infinite alternate; }
+@keyframes kiosk-bob-y { from { transform: translate(-50%, -38%); } to { transform: translate(-50%, -66%); } }
+.kiosk-creature.is-floor { animation: kiosk-glow 6s ease-in-out infinite alternate; }
+@keyframes kiosk-glow { from { opacity: 0.15; } to { opacity: 0.22; } }
+.kiosk-jelly { animation: kiosk-pulse-jelly 3.6s ease-in-out infinite; transform-origin: 50% 20%; }
+@keyframes kiosk-pulse-jelly { 0%, 100% { transform: scale(1, 1); } 20% { transform: scale(0.94, 1.05); } }
+.kiosk-lure { animation: kiosk-lure 2.8s ease-in-out infinite; }
+@keyframes kiosk-lure { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .kiosk-row, .kiosk-creature, .kiosk-creature > svg, .kiosk-zone, .kiosk-jelly, .kiosk-lure { animation: none !important; }
+  .kiosk-hero { transition: none; }
+}
+
+
+/* sending: each fish sways gently as it swims */
+.kiosk-sway { transform-origin: 30% 50%; animation: kiosk-sway ease-in-out infinite alternate; }
+@keyframes kiosk-sway { from { transform: rotate(-5deg) translateY(-4%); } to { transform: rotate(5deg) translateY(4%); } }
+@media (prefers-reduced-motion: reduce) { .kiosk-sway { animation: none; } }
+
+/* the first page's Start: bigger than other buttons, smaller than the question */
+.kiosk-btn.is-large { font-size: 1.45em; min-width: 9.5em; padding: 0.65em 2.8em; }
+/* progress dots sit at the top, level with the logo */
+.kiosk-steps { position: absolute; left: 50%; top: calc(clamp(1rem, 4vh, 2.5rem) + 1.1em); transform: translate(-50%, -50%); }
+
+/* a small line under a heading: the anonymity note, or the visitor's first answer */
+.kiosk-note { font-size: 0.95em; line-height: 1.45; color: rgba(255, 255, 255, 0.92); }
+.kiosk-recall {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  max-width: 34em; margin: 0 auto; font-style: italic; text-wrap: balance;
 }

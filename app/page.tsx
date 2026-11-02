@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FishSchool from "@/components/kiosk/FishSchool";
 
 /**
  * Home: the "dive deep" wordmark over a grainy aqua → blue gradient, with
@@ -19,6 +20,8 @@ const links = [
 export default function HomePage() {
   return (
     <main className="home-bg relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 py-16">
+      {/* Saskia's schooling fish, very faint, drifting behind everything */}
+      <FishSchool seed="home" count={28} size={[10, 22]} speed={55} colour="#ffffff" opacity={0.16} />
       <div className="home-grain pointer-events-none absolute inset-0" aria-hidden />
 
       <h1 className="relative m-0 w-full max-w-[640px]">
