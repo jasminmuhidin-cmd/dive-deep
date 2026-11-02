@@ -128,24 +128,28 @@ export default function TapThoughts({
  * Deterministic per thought (seeded), so a thought never jumps around.
  */
 function floatLines(text: string, seed: number) {
-  const words = text.trim().split(/\s+/);
+  // each "\n" starts a new line of its own ("because …" under "I care about …")
   const lines: string[] = [];
-  let line = "";
-  for (const w of words) {
-    const test = line ? `${line} ${w}` : w;
-    if (test.length > 24 && line) {
-      lines.push(line);
-      line = w;
-    } else line = test;
-  }
-  if (line) lines.push(line);
-  // Avoid a lonely last word: pull one word down from the previous line.
-  if (lines.length > 1 && !lines[lines.length - 1]!.includes(" ")) {
-    const prev = lines[lines.length - 2]!.split(" ");
-    if (prev.length > 2) {
-      const moved = prev.pop()!;
-      lines[lines.length - 2] = prev.join(" ");
-      lines[lines.length - 1] = `${moved} ${lines[lines.length - 1]}`;
+  for (const paragraph of text.trim().split("\n")) {
+    const words = paragraph.trim().split(/\s+/).filter(Boolean);
+    const start = lines.length;
+    let line = "";
+    for (const w of words) {
+      const test = line ? `${line} ${w}` : w;
+      if (test.length > 24 && line) {
+        lines.push(line);
+        line = w;
+      } else line = test;
+    }
+    if (line) lines.push(line);
+    // Avoid a lonely last word: pull one word down from the previous line.
+    if (lines.length - start > 1 && !lines[lines.length - 1]!.includes(" ")) {
+      const prev = lines[lines.length - 2]!.split(" ");
+      if (prev.length > 2) {
+        const moved = prev.pop()!;
+        lines[lines.length - 2] = prev.join(" ");
+        lines[lines.length - 1] = `${moved} ${lines[lines.length - 1]}`;
+      }
     }
   }
   const rnd = (i: number) => {

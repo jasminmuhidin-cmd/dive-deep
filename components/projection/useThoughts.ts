@@ -22,6 +22,17 @@ function hash01(s: string, salt: number): number {
   return ((h >>> 0) % 10000) / 10000;
 }
 
+/**
+ * The whole of what someone wrote at the kiosk, as they wrote it:
+ * "I care about …", then "because …" on a line of its own if they went deeper.
+ * (Their own "I care about" / "because" is dropped, so it's never said twice.)
+ */
+export function fullThought(s: Submission): string {
+  const care = s.worry_text.trim().replace(/^i\s+care\s+about\b[\s.…]*/i, "");
+  const because = (s.offering_text ?? "").trim().replace(/^(i\s+care\s+)?because\b[\s.…]*/i, "");
+  return because ? `I care about ${care}\nbecause ${because}` : `I care about ${care}`;
+}
+
 const MIN_DIST = 0.22;
 const PAD_X = 0.14;
 const PAD_Y = 0.16;
@@ -56,7 +67,7 @@ export function placeThought(
 
   return {
     id: s.id,
-    text: s.worry_text.trim(),
+    text: fullThought(s),
     x: best.x,
     y: best.y,
     phase: hash01(s.id, 9) * Math.PI * 2,
