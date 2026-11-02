@@ -114,7 +114,7 @@ export default function StewardPage() {
     <main className="relative min-h-screen text-foam">
       <div className="deep-dive-bg pointer-events-none absolute inset-0" />
       <div className="relative mx-auto max-w-lg px-5 py-10 pb-20">
-        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-sand/70">
+        <p className="text-[13px] text-sand/70">
           Stewardship
         </p>
         <h1 className="mt-3 font-serif text-3xl leading-tight">
@@ -132,7 +132,7 @@ export default function StewardPage() {
             {insightForFriction(submission.frictions?.[0])}
           </p>
           {submission.frictions?.[0] && (
-            <p className="mt-2 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-foam/40">
+            <p className="mt-2 text-center text-xs text-foam/40">
               {submission.frictions[0].label} ·{" "}
               {CATEGORY_LABELS[submission.category]}
             </p>
@@ -154,7 +154,7 @@ export default function StewardPage() {
               className="mt-4 w-full resize-none rounded-2xl border border-foam/15 bg-depth/50 px-4 py-3 text-base leading-relaxed text-foam placeholder:text-foam/35 focus:border-sand/50 focus:outline-none"
             />
           </label>
-          <p className="mt-1 font-mono text-xs text-foam/40">
+          <p className="mt-1 text-[13px] text-foam/40">
             {response.length}/500
           </p>
 
@@ -199,7 +199,7 @@ export default function StewardPage() {
         </form>
 
         <section className="mt-12">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.22em] text-sand/70">
+          <h2 className="text-[13px] text-sand/70">
             Lineage of care
           </h2>
           {actions.length === 0 ? (
@@ -210,7 +210,7 @@ export default function StewardPage() {
             <ul className="mt-4 space-y-4">
               {actions.map((action) => (
                 <li key={action.id} className="border-l border-foam/20 pl-4">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-foam/45">
+                  <p className="text-xs text-foam/45">
                     {ACTION_TYPE_LABELS[action.action_type]} ·{" "}
                     {new Date(action.created_at).toLocaleString()}
                   </p>

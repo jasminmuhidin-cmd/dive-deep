@@ -58,7 +58,21 @@ export interface Submission {
   fish_form?: FishForm | null;
   why_text?: string | null;
   frictions?: FrictionItem[];
+  /** Short Claude-written title naming the concern; null until generated */
+  key_worry?: string | null;
+  /** How close to home the issue sits, as coded in the sample spreadsheet */
+  perceived_distance?: PerceivedDistance | null;
+  /** How closely it's held, hand-coded on the samples — sets which part of the dive it sinks to */
+  worry_weight?: WorryWeight | null;
+  /** A stand-in thought from the sample spreadsheet — not in the database, so it can't take replies */
+  is_sample?: boolean;
 }
+
+export type PerceivedDistance = "personal" | "local" | "national" | "global";
+
+/** On someone's mind lately · a worry many share · one that's stayed with them */
+export const WORRY_WEIGHTS = ["recent", "common", "deep"] as const;
+export type WorryWeight = (typeof WORRY_WEIGHTS)[number];
 
 export interface StewardshipAction {
   id: string;

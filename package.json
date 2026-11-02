@@ -3,14 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx scripts/seed.ts",
-    "fetch-model": "node scripts/fetch-mediapipe-model.mjs"
+    "fetch-model": "node scripts/fetch-mediapipe-model.mjs",
+    "key-worries": "tsx --env-file-if-exists=.env.local scripts/key-worries.ts",
+    "import-responses": "python3 scripts/import-responses.py",
+    "wipe": "tsx --env-file-if-exists=.env.local scripts/wipe.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
     "@napi-rs/canvas": "^1.0.9",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.8.0",

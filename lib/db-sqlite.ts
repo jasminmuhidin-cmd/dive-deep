@@ -16,7 +16,7 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "shared-burdens.db");
 
 const SELECT_COLS = `id, worry_text, offering_text, category, created_at, is_claimed,
-  anonymous_code, uncover_count, theme, feeling_tag, connection_group`;
+  anonymous_code, uncover_count, theme, feeling_tag, connection_group, key_worry`;
 
 const globalForDb = globalThis as unknown as {
   __sharedBurdensDb?: Database.Database;
@@ -86,6 +86,7 @@ function getDb(): Database.Database {
   ensureColumn(db, "submissions", "theme", "TEXT DEFAULT 'unspecified'");
   ensureColumn(db, "submissions", "feeling_tag", "TEXT DEFAULT 'quiet'");
   ensureColumn(db, "submissions", "connection_group", "TEXT DEFAULT 'shared'");
+  ensureColumn(db, "submissions", "key_worry", "TEXT");
 
   // Backfill anonymous codes for older rows
   const missing = db
@@ -116,6 +117,7 @@ type SubmissionRow = {
   theme: string | null;
   feeling_tag: string | null;
   connection_group: string | null;
+  key_worry: string | null;
 };
 
 function mapSubmission(row: SubmissionRow): Submission {
@@ -131,6 +133,7 @@ function mapSubmission(row: SubmissionRow): Submission {
     theme: row.theme || row.category || "unspecified",
     feeling_tag: row.feeling_tag || "quiet",
     connection_group: row.connection_group || "shared",
+    key_worry: row.key_worry,
   };
 }
 
@@ -239,6 +242,12 @@ export function createSubmission(input: CreateSubmissionInput): Submission {
     feeling_tag,
     connection_group,
   };
+}
+
+export function setKeyWorry(id: string, keyWorry: string | null): void {
+  getDb()
+    .prepare(`UPDATE submissions SET key_worry = ? WHERE id = ?`)
+    .run(keyWorry, id);
 }
 
 export function incrementUncover(id: string): Submission | null {

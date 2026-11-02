@@ -57,7 +57,7 @@ export default function PromptCardDeck({
               <div className="flex justify-center">
                 <CreatureSilhouette form={card.fish} size={160} />
               </div>
-              <p className="mt-4 text-center font-mono text-[11px] uppercase tracking-[0.28em] text-sand/80">
+              <p className="mt-4 text-center text-[13px] text-sand/80">
                 {card.type}
               </p>
               <h2 className="mt-3 text-center font-serif text-2xl leading-snug text-foam md:text-3xl">
@@ -98,7 +98,7 @@ export default function PromptCardDeck({
           />
         ))}
       </div>
-      <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-foam/40 md:hidden">
+      <p className="mt-3 text-center text-xs text-foam/40 md:hidden">
         Swipe left or right
       </p>
     </div>

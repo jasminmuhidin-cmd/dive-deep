@@ -7,7 +7,7 @@ Interactive installation: Next.js kiosk + archive, dive-deep-7 Electron water pr
 Archive QR target: **https://dive-deep.vercel.app** (deploy Next.js there when ready).  
 Electron still polls **http://localhost:3000** for live ripples during the installation.
 
-On the **local Mac** kiosk (`npm run dev`), each receipt PNG is also sent via **Messages / iMessage** to `IMESSAGE_TO` (default `0422322522` → `+61422322522`). Requires Messages signed in and Automation permission for Terminal/Node (System Settings → Privacy & Security → Automation). Set `IMESSAGE_SEND=0` to disable. Does not run on Vercel.
+On the **local Mac** kiosk (`npm run dev`), receipt PNGs are saved to `data/prints/`. Sending them via **Messages / iMessage** is **off by default** — the app never touches Messages unless you set `IMESSAGE_SEND=1` (then it sends to `IMESSAGE_TO`, and needs Messages signed in plus Automation permission for Terminal/Node). Does not run on Vercel.
 
 ## Quick start
 

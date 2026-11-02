@@ -2,7 +2,7 @@ import { list, put } from "@vercel/blob";
 import fs from "fs";
 import path from "path";
 import { APP_URL } from "./config";
-import { sendFileViaIMessage } from "./imessage";
+import { getIMessageRecipient, sendFileViaIMessage } from "./imessage";
 import {
   renderReceiptPng,
   submissionToReceiptInput,
@@ -57,6 +57,10 @@ export async function storeReceiptForSubmission(
     fs.mkdirSync(LOCAL_DIR, { recursive: true });
     const file = localPath(submission.id);
     fs.writeFileSync(file, png);
+    // Messages is opt-in (IMESSAGE_SEND=1); without it the app never touches Messages
+    if (!getIMessageRecipient()) {
+      return { id: submission.id, receipt_url, localPath: file };
+    }
     // Local Mac only: push receipt to Messages (iMessage) — await so errors appear in logs
     const sent = await sendFileViaIMessage(
       file,

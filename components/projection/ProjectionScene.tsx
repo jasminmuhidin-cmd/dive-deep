@@ -457,6 +457,13 @@ export default function ProjectionScene({ tapThoughts = true }: { tapThoughts?: 
         />
       )}
 
+      <p className="pointer-events-none absolute bottom-6 right-6 z-10 text-xs text-[#0d4a5c]/45">
+        {status === "requesting"
+          ? "waiting for camera…"
+          : status === "ready"
+            ? "move · tap a blurry thought"
+            : "tap a blurry thought"}
+      </p>
     </div>
   );
 }

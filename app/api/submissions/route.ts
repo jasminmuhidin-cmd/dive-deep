@@ -1,11 +1,13 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import {
   countSubmissions,
   createSubmission,
   listSubmissions,
   searchSubmissions,
+  setKeyWorry,
 } from "@/lib/db";
 import { publishSubmission } from "@/lib/events";
+import { generateKeyWorry } from "@/lib/key-worry";
 import { storeReceiptForSubmission } from "@/lib/receipt-store";
 import { CATEGORIES, toDiveDeepThought, type Category } from "@/lib/types";
 
@@ -80,6 +82,12 @@ export async function POST(request: Request) {
     });
 
     publishSubmission(submission);
+
+    // Title the concern without holding up the kiosk.
+    after(async () => {
+      const keyWorry = await generateKeyWorry(submission.worry_text);
+      if (keyWorry) await setKeyWorry(submission.id, keyWorry);
+    });
 
     let receipt_url = `/api/receipts/${submission.id}`;
     let imessage: { ok: boolean; to?: string; error?: string } | undefined;

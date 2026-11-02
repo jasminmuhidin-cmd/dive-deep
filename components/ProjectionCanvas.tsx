@@ -409,7 +409,7 @@ export default function ProjectionCanvas() {
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-6 md:p-10">
         <div>
           <p className="font-serif text-xl text-foam/90">deep dive</p>
-          <p className="mt-2 font-mono text-xs text-foam/45">
+          <p className="mt-2 text-[13px] text-foam/45">
             {count} · tap or drag a fish
           </p>
         </div>
@@ -418,7 +418,7 @@ export default function ProjectionCanvas() {
       {!selected && spotlight && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-6 pb-10 md:pb-14">
           <div className="max-w-3xl text-center opacity-80">
-            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-sand/60">
+            <p className="text-[13px] text-sand/60">
               {CATEGORY_LABELS[spotlight.category]}
             </p>
             <p className="mt-3 font-serif text-2xl leading-snug text-foam/90 md:text-3xl">
@@ -451,7 +451,7 @@ export default function ProjectionCanvas() {
               >
                 <X className="h-5 w-5" />
               </button>
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-sand/70">
+              <p className="text-[13px] text-sand/70">
                 {CATEGORY_LABELS[selected.category]}
                 {selected.prompt_type
                   ? ` · ${PROMPT_LABELS[selected.prompt_type]}`

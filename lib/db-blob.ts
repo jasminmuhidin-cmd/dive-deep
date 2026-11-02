@@ -121,6 +121,15 @@ export async function createSubmission(
   return submission;
 }
 
+export async function setKeyWorry(
+  id: string,
+  keyWorry: string | null,
+): Promise<void> {
+  const s = await getSubmission(id);
+  if (!s) return;
+  await putJson(`${SUB_PREFIX}${id}.json`, { ...s, key_worry: keyWorry });
+}
+
 export async function incrementUncover(
   id: string,
 ): Promise<Submission | null> {

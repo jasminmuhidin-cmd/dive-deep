@@ -23,8 +23,9 @@ export function normalizeIMessagePhone(raw: string): string {
   return digits.startsWith("+") ? digits : `+${digits}`;
 }
 
+/** Off unless IMESSAGE_SEND=1 — the kiosk must never reach into Messages by default */
 export function getIMessageRecipient(): string | null {
-  if (process.env.IMESSAGE_SEND === "0") return null;
+  if (process.env.IMESSAGE_SEND !== "1") return null;
   if (process.platform !== "darwin") return null;
   if (process.env.VERCEL) return null;
   const raw = process.env.IMESSAGE_TO?.trim() || DEFAULT_TO;

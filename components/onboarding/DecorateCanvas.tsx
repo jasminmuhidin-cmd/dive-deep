@@ -24,6 +24,12 @@ const PENCIL_COLORS = ["#e9d68c", "#c6979d", "#4b908d", "#147a90", "#f4efe4"];
 /** Safe center zone as fractions of canvas — drawing is blocked here */
 const SAFE = { x: 0.22, y: 0.28, w: 0.56, h: 0.44 };
 
+/** The page's loaded font for a CSS variable — next/font renames families, so canvas can't use the plain name */
+function fontFamily(variable: string, fallback: string) {
+  const loaded = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+  return loaded ? `${loaded}, ${fallback}` : fallback;
+}
+
 function inSafeZone(x: number, y: number, w: number, h: number) {
   return (
     x >= w * SAFE.x &&
@@ -223,7 +229,7 @@ export default function DecorateCanvas({
             height: `${SAFE.h * 100}%`,
           }}
         >
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-sand/70">
+          <p className="text-xs text-sand/70">
             From another person
             {exchange.prompt_type
               ? ` · ${PROMPT_LABELS[exchange.prompt_type]}`
@@ -447,30 +453,33 @@ export async function compositePrint(
   roundRect(ctx, sx, sy, sw, sh, 36);
   ctx.fill();
 
+  const serif = fontFamily("--font-display", "Times New Roman, serif");
+  const sans = fontFamily("--font-body", "system-ui, sans-serif");
+
   ctx.fillStyle = "#2d3651";
-  ctx.font = "500 28px IBM Plex Mono, monospace";
+  ctx.font = `400 30px ${sans}`;
   ctx.textAlign = "center";
   const label = [
-    "FROM ANOTHER PERSON",
-    exchange.prompt_type ? PROMPT_LABELS[exchange.prompt_type].toUpperCase() : null,
-    CATEGORY_LABELS[exchange.category].toUpperCase(),
+    "From another person",
+    exchange.prompt_type ? PROMPT_LABELS[exchange.prompt_type] : null,
+    CATEGORY_LABELS[exchange.category],
   ]
     .filter(Boolean)
     .join("  ·  ");
   ctx.fillText(label, W / 2, sy + 70);
 
   ctx.fillStyle = "#121826";
-  ctx.font = "500 52px Fraunces, Georgia, serif";
+  ctx.font = `400 56px ${serif}`;
   wrapText(ctx, exchange.worry_text, W / 2, sy + 140, sw - 100, 64);
 
   if (exchange.why_text) {
     ctx.fillStyle = "#4b908d";
-    ctx.font = "400 28px Source Sans 3, sans-serif";
+    ctx.font = `400 28px ${sans}`;
     wrapText(ctx, exchange.why_text, W / 2, sy + sh * 0.62, sw - 120, 38);
   }
 
   ctx.fillStyle = "#8a9aa8";
-  ctx.font = "400 24px IBM Plex Mono, monospace";
+  ctx.font = `400 26px ${sans}`;
   ctx.fillText("deep dive  ·  keep, gift, or leave behind", W / 2, H - 80);
 
   return canvas.toDataURL("image/png");

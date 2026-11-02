@@ -1,411 +1,481 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type Ref, type RefObject } from "react";
 import {
   AnimatePresence,
+  animate,
+  MotionConfig,
   motion,
+  useMotionValue,
+  useMotionValueEvent,
   useScroll,
+  useReducedMotion,
   useTransform,
-  type MotionValue,
 } from "framer-motion";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import type { Submission } from "@/lib/types";
-import { PROJECTION_FISH_PATH } from "@/components/onboarding/fishPaths";
-import { DeepCreature, ShallowCreature, seeded } from "./Creatures";
-import ThoughtSheet from "./ThoughtSheet";
+import { Search } from "lucide-react";
+import type { Submission, WorryWeight } from "@/lib/types";
+import { sortByWeight, worryWeight } from "@/lib/issue-depth";
+import SAMPLE_RESPONSES from "@/lib/sample-responses.json";
+import { AmbientFlock } from "./Boids";
+import DepthRail, { type Checkpoint } from "./DepthRail";
+import { GUIDE_BOX, GuidePrompt, GuideSteps } from "./DiveGuide";
+import DiveSearch from "./DiveSearch";
+import { DiveFilters } from "./Ripples";
+import SeaFloor from "./SeaFloor";
+import SurfaceSubmarine from "./SurfaceSubmarine";
+import { ZONES } from "./species";
+import ThoughtFish from "./ThoughtFish";
 
-const MAX_DEPTH_M = 4000;
-/** Share of thoughts (the oldest) that have sunk into the deep */
-const DEEP_SHARE = 0.35;
+type Stops = [number, [number, number, number]][];
 
-const WATER_STOPS: [number, [number, number, number]][] = [
-  [0, [138, 211, 220]],
-  [0.12, [63, 157, 179]],
-  [0.35, [29, 106, 134]],
-  [0.6, [30, 42, 68]],
-  [0.8, [11, 16, 32]],
-  [1, [2, 3, 8]],
+/** Pale grey-blue at the surface, through teal and ocean blue, down to the darkest navy */
+const WATER_STOPS: Stops = [
+  [0, [209, 226, 230]],
+  [0.1, [209, 226, 230]],
+  [0.15, [194, 224, 227]],
+  [0.2, [175, 219, 224]],
+  [0.25, [160, 210, 219]],
+  [0.3, [146, 202, 214]],
+  [0.35, [131, 195, 208]],
+  [0.4, [116, 187, 203]],
+  [0.45, [100, 169, 190]],
+  [0.5, [85, 148, 175]],
+  [0.55, [69, 127, 159]],
+  [0.6, [53, 106, 144]],
+  [0.65, [36, 84, 128]],
+  [0.7, [20, 63, 112]],
+  [0.75, [15, 54, 99]],
+  [0.8, [13, 46, 86]],
+  [0.85, [10, 38, 73]],
+  [0.9, [8, 31, 60]],
+  [0.93, [6, 27, 53]],
+  [1, [6, 27, 53]],
 ];
 
-/** Water colour at scroll progress `p` — light aqua at the surface to near-black at the floor */
-function waterAt(p: number): string {
+/** Colour along `stops` at `p` (clamped to 0–1) */
+function colourAt(stops: Stops, p: number): string {
   const t = Math.max(0, Math.min(1, p));
-  const i = WATER_STOPS.findIndex(([stop]) => stop >= t);
-  if (i <= 0) return `rgb(${WATER_STOPS[0][1].join(",")})`;
-  const [a, from] = WATER_STOPS[i - 1];
-  const [b, to] = WATER_STOPS[i];
+  const i = stops.findIndex(([stop]) => stop >= t);
+  if (i === -1) return `rgb(${stops[stops.length - 1][1].join(",")})`;
+  if (i === 0) return `rgb(${stops[0][1].join(",")})`;
+  const [a, from] = stops[i - 1];
+  const [b, to] = stops[i];
   const k = (t - a) / (b - a);
   const rgb = from.map((c, j) => Math.round(c + (to[j] - c) * k));
   return `rgb(${rgb.join(",")})`;
 }
 
-/** 0 before `inStart`, rises to 1 by `inEnd`, holds, then falls to 0 between `outStart` and `outEnd` */
-function ramp(p: number, inStart: number, inEnd: number, outStart: number, outEnd: number) {
-  const rise = inEnd <= inStart ? 1 : (p - inStart) / (inEnd - inStart);
-  const fall = (outEnd - p) / (outEnd - outStart);
-  return Math.max(0, Math.min(1, rise, fall));
+/** Past this depth the water mid-screen is dark enough that text, fish and the rail turn pale */
+const DARK_AT = 0.48;
+
+/** The darkest colour on the page — a very dark blue, never black */
+const DEEP_INK = "#0c2a4c";
+
+/**
+ * Dark blue on the bright shallows, foam in the dark — fish a softer slate,
+ * pale in the deep. A faint halo of the water's own colour sits behind the
+ * text, so it stays readable where the water is mid-blue.
+ */
+const LIGHT_WATER = {
+  color: DEEP_INK,
+  textShadow: "0 0 10px rgba(214,236,241,0.55), 0 0 2px rgba(214,236,241,0.35)",
+  "--fish": "#2f4b74",
+} as CSSProperties;
+const DARK_WATER = {
+  color: "#f4efe4",
+  textShadow: "0 1px 2px rgba(6,27,53,0.45), 0 0 12px rgba(6,27,53,0.55)",
+  "--fish": "#c3d1e4",
+} as CSSProperties;
+
+const SECTIONS: { weight: WorryWeight; title: string; line: string }[] = [
+  { weight: "recent", title: "sunlight zone", line: "A recent worry." },
+  { weight: "common", title: "twilight zone", line: "A worry that keeps coming back." },
+  { weight: "deep", title: "midnight zone", line: "Stays with people, carried deeply." },
+];
+
+/** The column everything hangs in. The right margin is wider, to keep clear of the depth line. */
+const FRAME = "mx-auto max-w-lg pl-6 pr-10 md:max-w-3xl md:pr-16";
+
+const sectionOf = (s: Submission) => SECTIONS.find((x) => x.weight === worryWeight(s))?.title ?? "";
+
+/** How deep the water is at each checkpoint on the rail: start, sunlight, twilight, midnight, the floor */
+const CHECKPOINT_DEPTHS = [0.2, 0.45, 0.68, 0.86, 1];
+
+/**
+ * Scroll progress to depth, passing through each checkpoint's depth as it's
+ * reached — so the water darkens section by section however many thoughts
+ * each one holds.
+ */
+function depthAt(progress: number, stops: number[]): number {
+  const p = Math.max(0, Math.min(1, progress));
+  const xs = [0];
+  const ys = [0];
+  stops.forEach((stop, i) => {
+    if (stop < 0) return;
+    xs.push(Math.max(stop, xs[xs.length - 1] + 0.001));
+    ys.push(CHECKPOINT_DEPTHS[i]);
+  });
+  if (xs[xs.length - 1] < 1) {
+    xs.push(1);
+    ys.push(1);
+  }
+  const i = xs.findIndex((x) => x >= p);
+  if (i <= 0) return ys[0];
+  return ys[i - 1] + ((p - xs[i - 1]) / (xs[i] - xs[i - 1])) * (ys[i] - ys[i - 1]);
 }
 
-export default function MobileApp() {
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Submission | null>(null);
+/**
+ * Top up the live thoughts with the sample kiosk spreadsheet while real
+ * responses are thin. Set to false to show only live thoughts. Regenerate the
+ * samples after editing the spreadsheet with `npm run import-responses`.
+ */
+const USE_SAMPLE_RESPONSES = true;
+const SAMPLES = USE_SAMPLE_RESPONSES ? (SAMPLE_RESPONSES as Submission[]) : [];
 
+const newestFirst = (subs: Submission[]) =>
+  [...subs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+export default function MobileApp({ className = "" }: { className?: string }) {
+  const [submissions, setSubmissions] = useState<Submission[]>(() => newestFirst(SAMPLES));
+  const [loading, setLoading] = useState(true);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [dark, setDark] = useState(false);
+  const [railShown, setRailShown] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const startRef = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<HTMLElement>(null);
+  const depthsRef = useRef<HTMLElement>(null);
+  const deepestRef = useRef<HTMLElement>(null);
+  const floorRef = useRef<HTMLElement>(null);
+
+  // Live thoughts from the kiosk, with the samples as filler. A link like
+  // /mobile?thought=<id> (the kiosk's "Dive in") opens that thought on arrival.
   useEffect(() => {
+    const linked = new URLSearchParams(window.location.search).get("thought");
     fetch("/api/submissions")
       .then((r) => (r.ok ? r.json() : []))
-      .then((data: Submission[]) => {
-        setSubmissions(
-          [...data].sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime(),
-          ),
-        );
+      .then((live: Submission[]) => {
+        setSubmissions(newestFirst([...live, ...SAMPLES]));
+        if (linked && live.some((s) => s.id === linked)) setOpenId(linked);
       })
-      .catch(() => setSubmissions([]))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  // Newest thoughts swim near the light; the oldest have sunk to the floor.
-  const { sunlight, twilight, deep } = useMemo(() => {
-    const n = submissions.length;
-    const deepCount = n === 0 ? 0 : Math.max(1, Math.round(n * DEEP_SHARE));
-    const shallow = submissions.slice(0, n - deepCount);
-    const half = Math.ceil(shallow.length / 2);
-    return {
-      sunlight: shallow.slice(0, half),
-      twilight: shallow.slice(half),
-      deep: submissions.slice(n - deepCount),
+  const sections = useMemo(() => sortByWeight(submissions), [submissions]);
+  const sectionRefs: Record<WorryWeight, RefObject<HTMLElement | null>> = {
+    recent: surfaceRef,
+    common: depthsRef,
+    deep: deepestRef,
+  };
+
+  const checkpoints = useMemo<Checkpoint[]>(
+    () => [
+      { label: "start", ref: startRef },
+      { label: "sunlight", ref: surfaceRef },
+      { label: "twilight", ref: depthsRef },
+      { label: "midnight", ref: deepestRef },
+      { label: "the floor", ref: floorRef },
+    ],
+    [],
+  );
+
+  // Where along the scroll each checkpoint reaches the middle of the screen, 0–1
+  const [stops, setStops] = useState<number[]>([]);
+  const stopsValue = useMotionValue<number[]>([]);
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const measure = () => {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollable <= 0) return;
+      const next = checkpoints.map(({ ref }) => {
+        const el = ref.current;
+        if (!el) return -1;
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        return Math.min(1, Math.max(0, (top - window.innerHeight * 0.5) / scrollable));
+      });
+      setStops(next);
+      stopsValue.set(next);
     };
-  }, [submissions]);
+    const ro = new ResizeObserver(measure);
+    ro.observe(content);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [checkpoints, stopsValue]);
 
-  const close = useCallback(() => setSelected(null), []);
-
-  const { scrollYProgress } = useScroll();
-  // Function form so it's recomputed in JS on every scroll (up or down),
+  // Function transforms are recomputed in JS on every scroll (up or down),
   // rather than handed to a native scroll timeline some browsers don't support.
-  const water = useTransform(scrollYProgress, waterAt);
-  const lightOpacity = useTransform(scrollYProgress, (p) => ramp(p, 0, 0, 0.05, 0.28));
-  const schoolOpacity = useTransform(scrollYProgress, (p) =>
-    ramp(p, 0.04, 0.14, 0.45, 0.62),
-  );
-  const snowOpacity = useTransform(
-    scrollYProgress,
-    (p) => ramp(p, 0.45, 0.75, 2, 2) * 0.9,
-  );
-  const depthLabel = useTransform(
-    scrollYProgress,
-    (p) => `${Math.round(Math.max(0, p) * MAX_DEPTH_M).toLocaleString()} m`,
-  );
+  const { scrollY, scrollYProgress } = useScroll();
+  const depth = useTransform(() => depthAt(scrollYProgress.get(), stopsValue.get()));
+  // The screen shades deeper toward its foot, and a little deeper on the left, as light slants in
+  // from the right. Near the top it takes in a long stretch of the gradient — pale grey-blue easing
+  // into aqua, as the water opens — narrowing further down, where text needs the water even.
+  const water = useTransform(depth, (d) => {
+    const reach = 0.26 - 0.14 * Math.min(1, d / 0.4);
+    return `linear-gradient(200deg, ${colourAt(WATER_STOPS, d - 0.02)}, ${colourAt(WATER_STOPS, d + reach * 0.45)} 50%, ${colourAt(WATER_STOPS, d + reach)})`;
+  });
+  // schools of small fish roaming behind it all, slate in the shallows and pale in the deep
+  const schoolColour = useTransform(depth, (d): string => (d > DARK_AT ? "rgb(195,209,228)" : "rgb(47,75,116)"));
+  const schoolOpacity = useTransform(depth, (d) => 0.26 + Math.min(1, d) * 0.08);
+  // text turns pale in one quick fade, rather than passing through a grey that reads on neither
+  useMotionValueEvent(depth, "change", (d) => setDark(d > DARK_AT));
+  useMotionValueEvent(scrollY, "change", (y) => setRailShown(y > window.innerHeight * 0.45));
+
+  const toggle = useCallback((sub: Submission) => setOpenId((cur) => (cur === sub.id ? null : sub.id)), []);
+  const openSearch = useCallback(() => setSearching(true), []);
+  const closeSearch = useCallback(() => setSearching(false), []);
+  const pick = useCallback((sub: Submission) => {
+    setSearching(false);
+    setOpenId(sub.id);
+  }, []);
 
   return (
-    <main className="relative min-h-svh overflow-x-hidden text-foam">
-      <motion.div
-        className="fixed inset-0 z-0"
-        style={{ backgroundColor: water }}
-        aria-hidden
-      />
-      <SunRays opacity={lightOpacity} />
-      <AmbientSchools opacity={schoolOpacity} />
-      <MarineSnow opacity={snowOpacity} />
+    <MotionConfig reducedMotion="user">
+      <main
+        // Averia Serif Libre throughout, at a comfortable 15px; headings step up from there
+        className={`relative min-h-svh overflow-x-hidden text-[15px] leading-[1.7] tracking-[0.01em] transition-colors duration-700 ${className}`}
+        style={dark ? DARK_WATER : LIGHT_WATER}
+      >
+        <motion.div className="fixed inset-0 z-0" style={{ background: water }} aria-hidden />
+        <AmbientFlock colour={schoolColour} opacity={schoolOpacity} />
+        <DiveFilters />
 
-      <div className="pointer-events-none fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 rounded-full bg-ink/35 px-3 py-1.5 font-mono text-[11px] tracking-[0.14em] text-foam backdrop-blur-md">
-        <motion.span>{depthLabel}</motion.span>
-      </div>
+        <div ref={contentRef} className="relative z-10">
+          <Intro startRef={startRef} onSearch={openSearch} count={submissions.length} />
 
-      <div className="relative z-10 mx-auto max-w-lg">
-        <Intro />
+          {SECTIONS.map(({ weight, title, line }) => (
+            <section key={weight} aria-labelledby={`section-${weight}`}>
+              <SectionHeader ref={sectionRefs[weight]} id={`section-${weight}`} title={title} line={line} />
+              {/* fish swim their share of this column, so it's their size container */}
+              <div className="mx-auto max-w-lg pb-[6svh] pl-3 pr-10 md:max-w-3xl md:pr-24">
+                <div className="@container" style={{ "--lume": ZONES[weight].lume } as CSSProperties}>
+                  {sections[weight].map((sub, i) => (
+                    <ThoughtFish
+                      key={sub.id}
+                      submission={sub}
+                      zone={ZONES[weight].species}
+                      index={i}
+                      open={openId === sub.id}
+                      dimmed={openId !== null && openId !== sub.id}
+                      onToggle={toggle}
+                    />
+                  ))}
+                  {!loading && sections[weight].length === 0 && (
+                    <p className="py-10 text-center opacity-70">Nothing has settled here yet.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          ))}
 
-        <ZoneHeader
-          title="The sunlight zone"
-          body="The newest thoughts swim here, close to the light — still finding their shape."
-        />
-        <CreatureList items={sunlight} onOpen={setSelected} kind="shallow" />
+          <SeaFloor ref={floorRef} count={submissions.length} />
+        </div>
 
-        <ZoneHeader
-          title="The twilight zone"
-          body="The light is thinning. These have been drifting a little longer."
-        />
-        <CreatureList items={twilight} onOpen={setSelected} kind="shallow" />
-
-        <ZoneHeader
-          title="The midnight zone"
-          body="No sunlight reaches this far. The oldest thoughts settle here, glowing on their own."
-        />
-        <CreatureList items={deep} onOpen={setSelected} kind="deep" />
-
-        {!loading && submissions.length === 0 && (
-          <p className="px-6 py-16 text-center text-foam/60">
-            The water is still quiet. Send a ripple from the kiosk.
-          </p>
-        )}
-
-        <Seafloor count={submissions.length} />
-      </div>
-
-      <AnimatePresence>
-        {selected && (
-          <ThoughtSheet key={selected.id} submission={selected} onClose={close} />
-        )}
-      </AnimatePresence>
-    </main>
+        <DepthRail checkpoints={checkpoints} stops={stops} progress={scrollYProgress} shown={railShown} />
+        <SurfaceSubmarine />
+        <FilmGrain />
+        <AnimatePresence>
+          {searching && (
+            <DiveSearch submissions={submissions} sectionOf={sectionOf} onPick={pick} onClose={closeSearch} />
+          )}
+        </AnimatePresence>
+      </main>
+    </MotionConfig>
   );
 }
 
-function Intro() {
-  return (
-    <section className="relative flex min-h-svh flex-col justify-center px-6 pb-28 pt-20 text-ink">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-      >
-        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/60">
-          deep dive
-        </p>
-        <h1 className="mt-4 font-serif text-[2.6rem] leading-[1.05] tracking-tight">
-          Don&apos;t just skim the surface.
-        </h1>
-        <p className="mt-6 text-lg leading-relaxed text-ink/80">
-          Everyone who visits leaves something in the water — a care, a worry,
-          a question, a wish to be heard. They&apos;ve been drifting here ever
-          since.
-        </p>
-        <p className="mt-4 leading-relaxed text-ink/70">
-          Dive down. The newest thoughts swim near the light; the oldest have
-          sunk to the deep. Tap any creature to read what it carries.
-        </p>
-      </motion.div>
+/**
+ * The opening screen: the ways in and out, the name, what this is, how many
+ * thoughts are in the water, and a fish waiting at the bottom to show you how
+ * to explore.
+ */
+function Intro({
+  startRef,
+  onSearch,
+  count,
+}: {
+  startRef: Ref<HTMLDivElement>;
+  onSearch: () => void;
+  /** How many thoughts are in the water */
+  count: number;
+}) {
+  const fishRef = useRef<HTMLSpanElement>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
 
-      <motion.div
-        className="absolute inset-x-0 bottom-[max(2rem,env(safe-area-inset-bottom))] flex flex-col items-center text-ink/70"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.4, duration: 1 }}
+  // Opening the guide carries you down a little, so its steps come into view below the fish
+  useEffect(() => {
+    if (!guideOpen) return;
+    const raf = requestAnimationFrame(() => {
+      const fish = fishRef.current?.getBoundingClientRect();
+      if (!fish) return;
+      window.scrollTo({ top: window.scrollY + fish.top - window.innerHeight * 0.2, behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [guideOpen]);
+
+  const fade = (delay: number) => ({
+    initial: { opacity: 0, y: 8 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 1.1, delay, ease: "easeOut" as const },
+  });
+
+  return (
+    <section className="relative">
+      {/* one screen and half the guide fish tall, so only the fish's top half peeks up at the foot of the screen */}
+      <div
+        className={`${FRAME} flex flex-col pt-[calc(env(safe-area-inset-top)+0.5rem)]`}
+        style={{ minHeight: `calc(100svh + ${GUIDE_BOX / 2}px)` }}
       >
-        <span className="font-mono text-[11px] uppercase tracking-[0.28em]">
-          Scroll to dive
-        </span>
-        <ChevronDown className="dive-bob mt-2 h-6 w-6" aria-hidden />
-      </motion.div>
+        <DiveNav onSearch={onSearch} />
+
+        <motion.div className="mt-[6svh]" {...fade(0)}>
+          <OutlineLogo />
+        </motion.div>
+
+        {/* a little live status: how many thoughts are in the water right now */}
+        <motion.p
+          className="mt-5 flex items-center gap-2 self-center rounded-full border border-current/25 py-1 pl-2.5 pr-3.5 text-[13px]"
+          {...fade(0.45)}
+        >
+          <span className="relative grid h-2 w-2 place-items-center" aria-hidden>
+            <span className="absolute h-full w-full animate-ping rounded-full bg-current opacity-60 motion-reduce:hidden" />
+            <span className="h-2 w-2 rounded-full bg-current" />
+          </span>
+          <span className="sr-only">{count.toLocaleString()} thoughts in the water</span>
+          <span aria-hidden>
+            <CountUp to={count} className="font-bold tabular-nums" /> thoughts in the water
+          </span>
+        </motion.p>
+
+        {/* the words sit low, just above the fish */}
+        <motion.p
+          // justified edge to edge, last line included, and never hyphenated, so the gaps open into white rivers
+          className="mt-auto pt-[6svh] text-justify leading-[2.3] tracking-[0.02em] [hyphens:none] [text-align-last:justify] [word-spacing:0.08em]"
+          {...fade(0.3)}
+        >
+          Dive Deep is an interactive, multi-touch installation and web experience that transforms individual
+          care into collective ripples. Step into a space where your private thoughts dissolve into a shared
+          ecosystem of care.
+        </motion.p>
+
+        <div ref={startRef} className="mt-[3svh] self-center">
+          <GuidePrompt fishRef={fishRef} open={guideOpen} onToggle={() => setGuideOpen((o) => !o)} />
+        </div>
+      </div>
+      {guideOpen && <GuideSteps fishRef={fishRef} />}
     </section>
   );
 }
 
-function ZoneHeader({ title, body }: { title: string; body: string }) {
+/** A number rising to `to` from wherever it last was — from nothing on arrival */
+function CountUp({ to, className = "" }: { to: number; className?: string }) {
+  const reduced = useReducedMotion();
+  const value = useMotionValue(0);
+  const shown = useTransform(value, (v) => Math.round(v).toLocaleString());
+  useEffect(() => {
+    const run = animate(value, to, { duration: reduced ? 0 : 2.2, delay: reduced ? 0 : 0.6, ease: "easeOut" });
+    return () => run.stop();
+  }, [to, value, reduced]);
+  return <motion.span className={className}>{shown}</motion.span>;
+}
+
+/** Plain words across the top, spread evenly, the way in to search at the far edge */
+function DiveNav({ onSearch }: { onSearch: () => void }) {
+  const link = "flex min-h-11 items-center tracking-[0.04em] transition hover:opacity-60";
+  return (
+    <nav aria-label="Main" className="flex items-center justify-between">
+      <Link href="/" className={link}>
+        home
+      </Link>
+      <Link href="/kiosk" className={link}>
+        kiosk
+      </Link>
+      <Link href="/projection" className={link}>
+        installation
+      </Link>
+      <button
+        type="button"
+        onClick={onSearch}
+        aria-label="Search the thoughts"
+        className="-mr-3 grid h-11 w-11 place-items-center rounded-full transition hover:opacity-60"
+      >
+        <Search className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+      </button>
+    </nav>
+  );
+}
+
+/** The wordmark, drawn in fine dark-blue outline, wavering as if seen through moving water */
+function OutlineLogo({ className = "" }: { className?: string }) {
+  const reduced = useReducedMotion();
+  return (
+    <h1 className={className}>
+      <svg width={0} height={0} className="absolute" aria-hidden focusable="false">
+        <filter id="logo-wave" x="-5%" y="-20%" width="110%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.06" numOctaves={2} seed={7} result="noise">
+            {!reduced && (
+              <animate
+                attributeName="baseFrequency"
+                dur="9s"
+                values="0.012 0.06;0.016 0.08;0.01 0.05;0.012 0.06"
+                repeatCount="indefinite"
+              />
+            )}
+          </feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale={reduced ? 0 : 7} xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </svg>
+      <Image
+        src="/branding/logo-outline.svg"
+        alt="Dive Deep"
+        width={300}
+        height={67}
+        priority
+        className="block h-auto w-full"
+        style={{ filter: "url(#logo-wave)" }}
+      />
+    </h1>
+  );
+}
+
+/** A section's heading under a line across the water: its name, and a line on what's here */
+function SectionHeader({ ref, id, title, line }: { ref?: Ref<HTMLElement>; id: string; title: string; line: string }) {
   return (
     <motion.header
-      className="px-6 pb-4 pt-[24svh]"
-      initial={{ opacity: 0, y: 20 }}
+      ref={ref}
+      className={`${FRAME} pb-[5svh] pt-[16svh]`}
+      initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-15% 0px" }}
       transition={{ duration: 1.1, ease: "easeOut" }}
     >
-      <h2 className="font-serif text-3xl leading-tight text-foam [text-shadow:0_1px_18px_rgba(2,3,8,0.35)]">
+      <span className="mb-4 block h-px bg-current opacity-30" aria-hidden />
+      <h2 id={id} className="text-2xl font-bold leading-tight">
         {title}
       </h2>
-      <p className="mt-3 max-w-sm leading-relaxed text-foam/70">{body}</p>
+      <p className="mt-1.5 italic opacity-85">{line}</p>
     </motion.header>
   );
 }
 
-function CreatureList({
-  items,
-  onOpen,
-  kind,
-}: {
-  items: Submission[];
-  onOpen: (s: Submission) => void;
-  kind: "shallow" | "deep";
-}) {
-  const Creature = kind === "deep" ? DeepCreature : ShallowCreature;
+/** Fine film grain over everything, soft-light blended so it settles into whatever colour lies beneath */
+const GRAIN = `url("data:image/svg+xml,${encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='g' x='0' y='0'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' seed='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncR type='linear' slope='1.7' intercept='-0.35'/><feFuncG type='linear' slope='1.7' intercept='-0.35'/><feFuncB type='linear' slope='1.7' intercept='-0.35'/><feFuncA type='table' tableValues='1 1'/></feComponentTransfer></filter><rect width='100%' height='100%' filter='url(#g)'/></svg>",
+)}")`;
+
+function FilmGrain() {
   return (
-    <div className="px-4 pb-[8svh]">
-      {items.map((s) => (
-        <Creature key={s.id} submission={s} onOpen={onOpen} />
-      ))}
-    </div>
-  );
-}
-
-function Seafloor({ count }: { count: number }) {
-  return (
-    <footer className="relative mt-[20svh]">
-      <svg
-        viewBox="0 0 400 80"
-        preserveAspectRatio="none"
-        className="block h-20 w-full"
-        aria-hidden
-      >
-        <path
-          d="M0 50C40 30 80 40 120 46C170 54 200 24 250 30C300 36 330 56 400 40V80H0Z"
-          fill="#0a0e18"
-        />
-      </svg>
-      <div className="bg-[#0a0e18] px-6 pb-[max(3rem,env(safe-area-inset-bottom))] pt-6 text-center">
-        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-foam/40">
-          {MAX_DEPTH_M.toLocaleString()} m · the floor
-        </p>
-        <p className="mx-auto mt-4 max-w-xs font-serif text-2xl leading-snug text-foam/85">
-          {count > 0
-            ? `${count.toLocaleString()} thought${count === 1 ? "" : "s"} are held down here with you.`
-            : "You've reached the floor."}
-        </p>
-        <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-foam/50">
-          None of them are carried alone.
-        </p>
-        <div className="mt-8 flex flex-col items-center gap-3">
-          <Link
-            href="/gallery"
-            className="min-h-11 rounded-full border border-ripple/40 px-6 py-3 text-sm text-foam transition hover:border-ripple/70"
-          >
-            Browse the full archive
-          </Link>
-          <button
-            type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm text-foam/55 transition hover:text-foam"
-          >
-            <ChevronUp className="h-4 w-4" aria-hidden />
-            Back to the surface
-          </button>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Atmosphere (fixed, decorative)                                      */
-/* ------------------------------------------------------------------ */
-
-const RAYS = [
-  { left: "6%", width: "16vw", rot: 14, delay: 0 },
-  { left: "22%", width: "9vw", rot: 9, delay: -2.5 },
-  { left: "38%", width: "20vw", rot: 4, delay: -5 },
-  { left: "58%", width: "11vw", rot: -3, delay: -1.2 },
-  { left: "72%", width: "17vw", rot: -9, delay: -3.8 },
-  { left: "88%", width: "8vw", rot: -14, delay: -6.1 },
-];
-
-function SunRays({ opacity }: { opacity: MotionValue<number> }) {
-  return (
-    <motion.div
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
-      style={{ opacity }}
+    <div
+      className="pointer-events-none fixed inset-0 z-40 opacity-40 mix-blend-soft-light"
+      style={{ backgroundImage: GRAIN, backgroundSize: "300px 300px" }}
       aria-hidden
-    >
-      <div
-        className="dive-shimmer absolute inset-x-[-20%] top-[-30%] h-[70%]"
-        style={{
-          background:
-            "radial-gradient(closest-side at 50% 50%, rgba(255,251,226,0.85), rgba(255,251,226,0.25) 55%, transparent 100%)",
-        }}
-      />
-      {RAYS.map((r) => (
-        <div
-          key={r.left}
-          className="dive-ray absolute top-[-10%] h-[120%] origin-top blur-[6px]"
-          style={
-            {
-              left: r.left,
-              width: r.width,
-              "--ray-rot": `${r.rot}deg`,
-              animationDelay: `${r.delay}s`,
-              background:
-                "linear-gradient(to bottom, rgba(255,250,222,0.7), rgba(255,250,222,0.18) 55%, transparent 85%)",
-            } as CSSProperties
-          }
-        />
-      ))}
-      {Array.from({ length: 10 }, (_, i) => (
-        <span
-          key={i}
-          className="dive-bubble absolute bottom-[-4%] rounded-full border border-white/60 bg-white/15"
-          style={{
-            left: `${5 + seeded(`bubble-${i}`) * 90}%`,
-            width: 4 + seeded(`bubble-${i}`, 1) * 8,
-            height: 4 + seeded(`bubble-${i}`, 1) * 8,
-            animationDuration: `${9 + seeded(`bubble-${i}`, 2) * 9}s`,
-            animationDelay: `-${seeded(`bubble-${i}`, 3) * 18}s`,
-          }}
-        />
-      ))}
-    </motion.div>
-  );
-}
-
-const SCHOOLS = [
-  { top: "22%", size: 16, duration: 34, delay: 0, color: "#f4efe4" },
-  { top: "48%", size: 11, duration: 46, delay: -18, color: "#e9d68c" },
-  { top: "70%", size: 13, duration: 40, delay: -8, color: "#cfe9ff" },
-];
-
-function AmbientSchools({ opacity }: { opacity: MotionValue<number> }) {
-  return (
-    <motion.div
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
-      style={{ opacity }}
-      aria-hidden
-    >
-      {SCHOOLS.map((school, si) => (
-        <div
-          key={school.top}
-          className="dive-school absolute left-0"
-          style={{
-            top: school.top,
-            animationDuration: `${school.duration}s`,
-            animationDelay: `${school.delay}s`,
-          }}
-        >
-          {Array.from({ length: 6 }, (_, i) => (
-            <svg
-              key={i}
-              viewBox="0 -1 66 34"
-              width={school.size * 2.3}
-              height={school.size}
-              className="absolute opacity-50"
-              style={{
-                left: seeded(`school-${si}-${i}`) * 70,
-                top: seeded(`school-${si}-${i}`, 1) * 46 - 23,
-                transform: "scaleX(-1)",
-              }}
-            >
-              <path d={PROJECTION_FISH_PATH} fill={school.color} />
-            </svg>
-          ))}
-        </div>
-      ))}
-    </motion.div>
-  );
-}
-
-function MarineSnow({ opacity }: { opacity: MotionValue<number> }) {
-  return (
-    <motion.div
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
-      style={{ opacity }}
-      aria-hidden
-    >
-      {Array.from({ length: 36 }, (_, i) => {
-        const key = `snow-${i}`;
-        const size = 1 + seeded(key, 1) * 2.5;
-        return (
-          <span
-            key={key}
-            className="dive-snow absolute top-[-4%] rounded-full bg-foam/70"
-            style={{
-              left: `${seeded(key) * 100}%`,
-              width: size,
-              height: size,
-              animationDuration: `${16 + seeded(key, 2) * 18}s`,
-              animationDelay: `-${seeded(key, 3) * 34}s`,
-            }}
-          />
-        );
-      })}
-    </motion.div>
+    />
   );
 }

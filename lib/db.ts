@@ -54,6 +54,15 @@ export async function createSubmission(
     : sqlite.createSubmission(input);
 }
 
+export async function setKeyWorry(
+  id: string,
+  keyWorry: string | null,
+): Promise<void> {
+  return useBlob()
+    ? blob.setKeyWorry(id, keyWorry)
+    : sqlite.setKeyWorry(id, keyWorry);
+}
+
 export async function incrementUncover(
   id: string,
 ): Promise<Submission | null> {

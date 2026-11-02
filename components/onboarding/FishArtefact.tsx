@@ -46,7 +46,7 @@ export default function FishArtefact({
         <CreatureSilhouette form={fishForm} size={compact ? 140 : 200} />
 
         <div className="min-w-0 flex-1 text-center md:text-left">
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-sand/70">
+          <p className="text-xs text-sand/70">
             {PROMPT_LABELS[promptType]} · {FISH_FORM_LABELS[fishForm]}
             {category ? ` · ${CATEGORY_LABELS[category]}` : ""}
           </p>

@@ -5,7 +5,7 @@ export default function HomePage() {
     <main className="relative min-h-screen overflow-hidden text-foam">
       <div className="deep-dive-bg pointer-events-none absolute inset-0" />
       <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-sand/70">
+        <p className="text-[13px] text-sand/70">
           Installation testing hub
         </p>
         <h1 className="mt-4 font-serif text-5xl leading-tight tracking-tight text-foam md:text-6xl">
@@ -55,7 +55,7 @@ export default function HomePage() {
             Legacy water
           </Link>
         </div>
-        <p className="mt-10 max-w-md font-mono text-xs leading-relaxed text-foam/40">
+        <p className="mt-10 max-w-md text-[13px] leading-relaxed text-foam/40">
           Phase 3 projection:{" "}
           <a href="/projection" className="text-foam/70 underline">
             /projection

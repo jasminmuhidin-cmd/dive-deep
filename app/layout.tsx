@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import {
-  Fraunces,
   Source_Sans_3,
   IBM_Plex_Mono,
   Playfair_Display,
   Playfair,
 } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const display = Fraunces({
+const display = localFont({
   variable: "--font-display",
-  subsets: ["latin"],
-  axes: ["SOFT", "WONK", "opsz"],
+  src: [
+    { path: "./fonts/texgyretermes-regular.otf", weight: "400", style: "normal" },
+    { path: "./fonts/texgyretermes-italic.otf", weight: "400", style: "italic" },
+    { path: "./fonts/texgyretermes-bold.otf", weight: "700", style: "normal" },
+    { path: "./fonts/texgyretermes-bolditalic.otf", weight: "700", style: "italic" },
+  ],
+  fallback: ["Times New Roman", "Times", "serif"],
 });
 
 const body = Source_Sans_3({
