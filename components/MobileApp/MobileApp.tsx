@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import OutlineLogo from "@/components/branding/OutlineLogo";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type Ref, type RefObject } from "react";
 import {
@@ -152,7 +152,7 @@ export default function MobileApp({ className = "" }: { className?: string }) {
   const floorRef = useRef<HTMLElement>(null);
 
   // Live thoughts from the kiosk, with the samples as filler. A link like
-  // /mobile?thought=<id> (the kiosk's "Dive in") opens that thought on arrival.
+  // /?thought=<id> (the kiosk's "Dive in") opens that thought on arrival.
   useEffect(() => {
     const linked = new URLSearchParams(window.location.search).get("thought");
     fetch("/api/submissions")
@@ -409,39 +409,6 @@ function DiveNav({ onSearch }: { onSearch: () => void }) {
         <Search className="h-4 w-4" strokeWidth={1.5} aria-hidden />
       </button>
     </nav>
-  );
-}
-
-/** The wordmark, drawn in fine dark-blue outline, wavering as if seen through moving water */
-function OutlineLogo({ className = "" }: { className?: string }) {
-  const reduced = useReducedMotion();
-  return (
-    <h1 className={className}>
-      <svg width={0} height={0} className="absolute" aria-hidden focusable="false">
-        <filter id="logo-wave" x="-5%" y="-20%" width="110%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.06" numOctaves={2} seed={7} result="noise">
-            {!reduced && (
-              <animate
-                attributeName="baseFrequency"
-                dur="9s"
-                values="0.012 0.06;0.016 0.08;0.01 0.05;0.012 0.06"
-                repeatCount="indefinite"
-              />
-            )}
-          </feTurbulence>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale={reduced ? 0 : 7} xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-      </svg>
-      <Image
-        src="/branding/logo-outline.svg"
-        alt="Dive Deep"
-        width={300}
-        height={67}
-        priority
-        className="block h-auto w-full"
-        style={{ filter: "url(#logo-wave)" }}
-      />
-    </h1>
   );
 }
 

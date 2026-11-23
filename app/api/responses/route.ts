@@ -1,31 +1,13 @@
 import { NextResponse } from "next/server";
-import {
-  createThoughtResponse,
-  getSubmission,
-  getSubmissionByCode,
-  listResponses,
-} from "@/lib/db";
+import { createThoughtResponse, getSubmission, listResponses } from "@/lib/db";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const submissionId = searchParams.get("submission_id")?.trim();
-  const code = searchParams.get("code")?.trim();
-
-  let id = submissionId;
-  if (!id && code) {
-    const found = await getSubmissionByCode(code);
-    if (!found) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-    id = found.id;
-  }
+  const id = searchParams.get("submission_id")?.trim();
   if (!id) {
-    return NextResponse.json(
-      { error: "submission_id or code required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "submission_id required" }, { status: 400 });
   }
   if (!(await getSubmission(id))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

@@ -3,11 +3,8 @@ import fs from "fs";
 import path from "path";
 import { randomBytes, randomUUID } from "crypto";
 import type {
-  ActionType,
   Category,
-  CreateStewardshipInput,
   CreateSubmissionInput,
-  StewardshipAction,
   Submission,
   ThoughtResponse,
 } from "./types";
@@ -152,51 +149,10 @@ export function countSubmissions(): number {
   return row.n;
 }
 
-export function searchSubmissions(options: {
-  query?: string;
-  category?: Category | "all";
-}): Submission[] {
-  const query = options.query?.trim().toLowerCase() ?? "";
-  const category =
-    options.category && options.category !== "all" ? options.category : null;
-
-  let sql = `SELECT ${SELECT_COLS} FROM submissions WHERE 1 = 1`;
-  const params: string[] = [];
-
-  if (category) {
-    sql += ` AND (category = ? OR theme = ?)`;
-    params.push(category, category);
-  }
-
-  if (query) {
-    sql += ` AND (
-      LOWER(worry_text) LIKE ?
-      OR LOWER(COALESCE(theme, '')) LIKE ?
-      OR LOWER(COALESCE(anonymous_code, '')) LIKE ?
-    )`;
-    const like = `%${query}%`;
-    params.push(like, like, like);
-  }
-
-  sql += ` ORDER BY created_at DESC`;
-  return (getDb().prepare(sql).all(...params) as SubmissionRow[]).map(
-    mapSubmission,
-  );
-}
-
 export function getSubmission(id: string): Submission | null {
   const row = getDb()
     .prepare(`SELECT ${SELECT_COLS} FROM submissions WHERE id = ?`)
     .get(id) as SubmissionRow | undefined;
-  return row ? mapSubmission(row) : null;
-}
-
-export function getSubmissionByCode(code: string): Submission | null {
-  const row = getDb()
-    .prepare(
-      `SELECT ${SELECT_COLS} FROM submissions WHERE UPPER(anonymous_code) = UPPER(?)`,
-    )
-    .get(code.trim()) as SubmissionRow | undefined;
   return row ? mapSubmission(row) : null;
 }
 
@@ -290,67 +246,6 @@ export function createThoughtResponse(
   };
 }
 
-export function listPendingSince(sinceIso: string | null): Submission[] {
-  if (!sinceIso) {
-    return listSubmissions();
-  }
-  return (
-    getDb()
-      .prepare(
-        `SELECT ${SELECT_COLS} FROM submissions
-         WHERE created_at > ?
-         ORDER BY created_at ASC`,
-      )
-      .all(sinceIso) as SubmissionRow[]
-  ).map(mapSubmission);
-}
-
-export function listStewardshipBySubmission(
-  submissionId: string,
-): StewardshipAction[] {
-  return getDb()
-    .prepare(
-      `SELECT id, submission_id, response_text, action_type, created_at
-       FROM stewardship_actions
-       WHERE submission_id = ?
-       ORDER BY created_at ASC`,
-    )
-    .all(submissionId) as StewardshipAction[];
-}
-
-export function createStewardshipAction(
-  input: CreateStewardshipInput,
-): StewardshipAction {
-  const id = randomUUID();
-  const created_at = new Date().toISOString();
-  const db = getDb();
-
-  const insert = db.transaction(() => {
-    db.prepare(
-      `INSERT INTO stewardship_actions (id, submission_id, response_text, action_type, created_at)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run(
-      id,
-      input.submission_id,
-      input.response_text.trim(),
-      input.action_type,
-      created_at,
-    );
-    db.prepare(`UPDATE submissions SET is_claimed = 1 WHERE id = ?`).run(
-      input.submission_id,
-    );
-  });
-  insert();
-
-  return {
-    id,
-    submission_id: input.submission_id,
-    response_text: input.response_text.trim(),
-    action_type: input.action_type,
-    created_at,
-  };
-}
-
 export function clearAll(): void {
   const db = getDb();
   db.exec(
@@ -358,23 +253,3 @@ export function clearAll(): void {
   );
 }
 
-export function seedSubmission(
-  data: CreateSubmissionInput & { created_at?: string },
-): Submission {
-  const created = createSubmission(data);
-  if (data.created_at) {
-    getDb()
-      .prepare(`UPDATE submissions SET created_at = ? WHERE id = ?`)
-      .run(data.created_at, created.id);
-    return { ...created, created_at: data.created_at };
-  }
-  return created;
-}
-
-export function seedStewardship(data: {
-  submission_id: string;
-  response_text: string;
-  action_type: ActionType;
-}): StewardshipAction {
-  return createStewardshipAction(data);
-}

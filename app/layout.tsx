@@ -1,58 +1,10 @@
 import type { Metadata } from "next";
-import {
-  Source_Sans_3,
-  IBM_Plex_Mono,
-  Playfair_Display,
-  Playfair,
-} from "next/font/google";
-import localFont from "next/font/local";
 import "./globals.css";
 
-const display = localFont({
-  variable: "--font-display",
-  src: [
-    { path: "./fonts/texgyretermes-regular.otf", weight: "400", style: "normal" },
-    { path: "./fonts/texgyretermes-italic.otf", weight: "400", style: "italic" },
-    { path: "./fonts/texgyretermes-bold.otf", weight: "700", style: "normal" },
-    { path: "./fonts/texgyretermes-bolditalic.otf", weight: "700", style: "italic" },
-  ],
-  fallback: ["Times New Roman", "Times", "serif"],
-});
-
-const body = Source_Sans_3({
-  variable: "--font-body",
-  subsets: ["latin"],
-});
-
-const mono = IBM_Plex_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-});
-
-/**
- * Projection typography. Playfair Display has no 300 on Google Fonts (it
- * starts at 400), so "Light 300" uses Playfair — the same designer's newer
- * family, which does ship a true 300 (and an optical-size axis).
- */
-const playfairDisplay = Playfair_Display({
-  variable: "--font-playfair-display",
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-});
-
-const playfairLight = Playfair({
-  variable: "--font-playfair-light",
-  subsets: ["latin"],
-  weight: ["300", "400"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "deep dive",
+  title: "dive deep",
   description:
-    "Don't just skim the surface. Find what anchors you — an interactive installation about care, friction, and collective action.",
+    "Don't just skim the surface. Dive through what people carry, and add your own ripple — an interactive installation about care.",
 };
 
 export default function RootLayout({
@@ -61,11 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${display.variable} ${body.variable} ${mono.variable} ${playfairDisplay.variable} ${playfairLight.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+    <html lang="en" className="h-full antialiased">
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

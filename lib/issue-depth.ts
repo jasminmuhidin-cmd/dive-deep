@@ -1,9 +1,5 @@
 import { WORRY_WEIGHTS, type PerceivedDistance, type Submission, type WorryWeight } from "./types";
 
-/** The four depths of the dive, shallowest first */
-export const DEPTH_BANDS = ["surface", "below", "depths", "deepest"] as const;
-export type DepthBand = (typeof DEPTH_BANDS)[number];
-
 /**
  * Words that point past a personal moment to something structural — an issue
  * no one person can fix. Matched as word stems. Oppression, violence and
@@ -56,7 +52,7 @@ function systemic(text: string): number {
  * the person needed to say — plus their reasons and frictions, and how far
  * the issue reaches (personal → global), where known.
  */
-export function issueComplexity(s: Submission): number {
+function issueComplexity(s: Submission): number {
   const text = [s.worry_text, s.why_text ?? ""].join(" ");
   const w = words(text);
   if (w.length === 0) return 0;
@@ -71,25 +67,6 @@ export function issueComplexity(s: Submission): number {
   // when we know how far the issue reaches, let that carry a share of the weight
   if (!s.perceived_distance) return base;
   return base * 0.7 + DISTANCE_REACH[s.perceived_distance] * 0.3;
-}
-
-/**
- * Thoughts sorted shallow to deep by complexity, split evenly into the four
- * bands — so every depth has something in it, and each sinks further than the last.
- */
-export function sortIntoBands(subs: Submission[]): Record<DepthBand, Submission[]> {
-  const ranked = subs
-    .map((s) => ({ s, score: issueComplexity(s) }))
-    .sort((a, b) => a.score - b.score || a.s.created_at.localeCompare(b.s.created_at))
-    .map(({ s }) => s);
-  const n = ranked.length;
-  const cut = (k: number) => Math.round((n * k) / DEPTH_BANDS.length);
-  return {
-    surface: ranked.slice(0, cut(1)),
-    below: ranked.slice(cut(1), cut(2)),
-    depths: ranked.slice(cut(2), cut(3)),
-    deepest: ranked.slice(cut(3)),
-  };
 }
 
 /**

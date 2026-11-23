@@ -1,11 +1,8 @@
 import { del, get, list, put } from "@vercel/blob";
 import { randomBytes, randomUUID } from "crypto";
 import type {
-  ActionType,
   Category,
-  CreateStewardshipInput,
   CreateSubmissionInput,
-  StewardshipAction,
   Submission,
   ThoughtResponse,
 } from "./types";
@@ -63,40 +60,8 @@ export async function countSubmissions(): Promise<number> {
   return page.blobs.length;
 }
 
-export async function searchSubmissions(options: {
-  query?: string;
-  category?: Category | "all";
-}): Promise<Submission[]> {
-  const query = options.query?.trim().toLowerCase() ?? "";
-  const category =
-    options.category && options.category !== "all" ? options.category : null;
-  let rows = await listSubmissions();
-  if (category) {
-    rows = rows.filter((s) => s.category === category || s.theme === category);
-  }
-  if (query) {
-    rows = rows.filter(
-      (s) =>
-        s.worry_text.toLowerCase().includes(query) ||
-        (s.theme || "").toLowerCase().includes(query) ||
-        (s.anonymous_code || "").toLowerCase().includes(query),
-    );
-  }
-  return rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
-}
-
 export async function getSubmission(id: string): Promise<Submission | null> {
   return readJson<Submission>(`${SUB_PREFIX}${id}.json`);
-}
-
-export async function getSubmissionByCode(
-  code: string,
-): Promise<Submission | null> {
-  const needle = code.trim().toUpperCase();
-  const all = await listSubmissions();
-  return (
-    all.find((s) => (s.anonymous_code || "").toUpperCase() === needle) ?? null
-  );
 }
 
 export async function createSubmission(
@@ -163,42 +128,6 @@ export async function createThoughtResponse(
   return row;
 }
 
-export async function listPendingSince(
-  sinceIso: string | null,
-): Promise<Submission[]> {
-  const all = await listSubmissions();
-  if (!sinceIso) return all;
-  return all.filter((s) => s.created_at > sinceIso);
-}
-
-export async function listStewardshipBySubmission(
-  submissionId: string,
-): Promise<StewardshipAction[]> {
-  const all = await listJson<StewardshipAction>(STEW_PREFIX);
-  return all
-    .filter((a) => a.submission_id === submissionId)
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
-}
-
-export async function createStewardshipAction(
-  input: CreateStewardshipInput,
-): Promise<StewardshipAction> {
-  const row: StewardshipAction = {
-    id: randomUUID(),
-    submission_id: input.submission_id,
-    response_text: input.response_text.trim(),
-    action_type: input.action_type,
-    created_at: new Date().toISOString(),
-  };
-  await putJson(`${STEW_PREFIX}${row.id}.json`, row);
-  const sub = await getSubmission(input.submission_id);
-  if (sub) {
-    sub.is_claimed = 1;
-    await putJson(`${SUB_PREFIX}${sub.id}.json`, sub);
-  }
-  return row;
-}
-
 export async function clearAll(): Promise<void> {
   for (const prefix of [SUB_PREFIX, RESP_PREFIX, STEW_PREFIX]) {
     const page = await list({ prefix, limit: 1000 });
@@ -208,20 +137,3 @@ export async function clearAll(): Promise<void> {
   }
 }
 
-export async function seedSubmission(
-  data: CreateSubmissionInput & { created_at?: string },
-): Promise<Submission> {
-  const created = await createSubmission(data);
-  if (!data.created_at) return created;
-  const updated = { ...created, created_at: data.created_at };
-  await putJson(`${SUB_PREFIX}${updated.id}.json`, updated);
-  return updated;
-}
-
-export async function seedStewardship(data: {
-  submission_id: string;
-  response_text: string;
-  action_type: ActionType;
-}): Promise<StewardshipAction> {
-  return createStewardshipAction(data);
-}

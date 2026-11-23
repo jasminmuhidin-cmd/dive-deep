@@ -12,9 +12,6 @@ export const FRILL = {
   sheen: "M14 23C22 17 34 15 48 17",
 };
 
-/** Where the tail's fin lines end, along the tail's edge */
-export const TAIL_RAYS = [8, 16, 24, 32, 40, 48, 56];
-
 /** Angelfish: a tall disc with swept-back sails and belly streamers, facing left */
 export const ANGEL = {
   viewBox: "-2 -26 124 120",
@@ -28,5 +25,3 @@ export const ANGEL = {
   streamers: ["M34 48C38 62 46 76 60 90", "M38 47C44 60 54 72 70 82"],
 };
 
-/** Soft vertical stripes across the angelfish's body */
-export const ANGEL_BANDS = ["M28 12Q24 31 28 51", "M46 10Q42 31 46 52", "M62 18Q59 31 62 45"];

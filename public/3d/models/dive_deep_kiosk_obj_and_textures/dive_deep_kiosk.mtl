@@ -1,0 +1,87 @@
+# Dive Deep Interactive Kiosk - Wavefront Material Library (.mtl)
+# Compatible with Blender 3.x / 4.x Principled BSDF OBJ Importer
+
+newmtl Brushed_Stainless_Steel
+Ka 0.820 0.825 0.835
+Kd 0.820 0.825 0.835
+Ks 0.950 0.955 0.960
+Ns 450.0
+Pm 0.92
+Pr 0.24
+Ni 1.50
+d 1.0
+illum 2
+
+newmtl Screen_UI_Display
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 0.850 0.850 0.850
+Ke 0.350 0.350 0.350
+Ns 800.0
+Pm 0.00
+Pr 0.08
+d 1.0
+illum 2
+map_Kd screen_ui.png
+map_Ke screen_ui.png
+
+newmtl Thermal_Receipt_Paper
+Ka 0.970 0.968 0.960
+Kd 0.970 0.968 0.960
+Ks 0.150 0.150 0.150
+Ns 60.0
+Pm 0.00
+Pr 0.65
+d 1.0
+illum 2
+map_Kd receipt_design.png
+
+newmtl Keycap_Alphas_White
+Ka 0.945 0.952 0.965
+Kd 0.945 0.952 0.965
+Ks 0.250 0.250 0.250
+Ns 120.0
+Pm 0.00
+Pr 0.42
+d 1.0
+illum 2
+
+newmtl Keycap_Modifiers_Periwinkle
+Ka 0.612 0.714 0.863
+Kd 0.612 0.714 0.863
+Ks 0.250 0.250 0.250
+Ns 120.0
+Pm 0.00
+Pr 0.42
+d 1.0
+illum 2
+
+newmtl Keyboard_Switch_Plate
+Ka 0.180 0.190 0.210
+Kd 0.180 0.190 0.210
+Ks 0.400 0.400 0.400
+Ns 200.0
+Pm 0.60
+Pr 0.45
+d 1.0
+illum 2
+
+newmtl Printer_Slot_Interior
+Ka 0.050 0.050 0.055
+Kd 0.050 0.050 0.055
+Ks 0.050 0.050 0.055
+Ns 20.0
+Pm 0.00
+Pr 0.90
+d 1.0
+illum 2
+
+newmtl Studio_Backdrop_Light
+Ka 0.972 0.965 0.968
+Kd 0.972 0.965 0.968
+Ks 0.080 0.080 0.080
+Ns 30.0
+Pm 0.00
+Pr 0.85
+d 1.0
+illum 2

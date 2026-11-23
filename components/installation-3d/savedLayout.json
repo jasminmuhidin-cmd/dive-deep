@@ -1,0 +1,111 @@
+{
+  "Floor plan.hallWidth": 3.6,
+  "Floor plan.hallLength": 8,
+  "Floor plan.mainRoomDepth": 2.5,
+  "Floor plan.curveDepth": 3.8,
+  "Floor plan.dividerThickness": 0.32,
+  "Floor plan.wallHeight": 3.6,
+  "Floor plan.dividerHeight": 3,
+  "Floor plan.cutaway": true,
+  "Floor plan.Floor.floorMargin": 0,
+  "Floor plan.Floor.floorEnd": 0.3,
+  "Floor plan.Floor.floorColor": "#121722",
+  "Lighting.ambient": 0.45999999999999996,
+  "Lighting.hemisphere": 1.46,
+  "Lighting.key": 0,
+  "Lighting.keyPosition": [
+    9,
+    14,
+    10
+  ],
+  "Lighting.shadows": true,
+  "Lighting.wallGlow": 1.57,
+  "Lighting.wallLights": 9.1,
+  "Lighting.pillarLight": 5.800000000000001,
+  "Kiosks.autoFit": false,
+  "Kiosks.fitHeight": 1.24,
+  "Kiosks.scale": 1,
+  "Kiosks.rotationDeg": 47,
+  "Kiosks.kiosk 1.k0pos": [
+    6.2,
+    2.9
+  ],
+  "Kiosks.kiosk 1.k0rot": 90,
+  "Kiosks.kiosk 2.k1pos": [
+    3.8,
+    0.9
+  ],
+  "Kiosks.kiosk 2.k1rot": 27,
+  "Kiosks.kiosk 3.k2pos": [
+    1.5,
+    2.9
+  ],
+  "Kiosks.kiosk 3.k2rot": 90,
+  "Beanbags.bagScale": 0.75,
+  "Beanbags.bagColor": "#41598a",
+  "Beanbags.rugColor": "#b9bfcc",
+  "Beanbags.rug0pos": [
+    -3.6,
+    1.5
+  ],
+  "Beanbags.rug0r": 1.25,
+  "Beanbags.rug1pos": [
+    -3.8,
+    -1.5
+  ],
+  "Beanbags.rug1r": 1.25,
+  "Beanbags.rug2pos": [
+    -5.2,
+    0
+  ],
+  "Beanbags.rug2r": 0.75,
+  "Objects.pillarPos": [
+    6.7,
+    -1.9500000000000004
+  ],
+  "Objects.pillarHeight": 1.1,
+  "Objects.rippleCenter": [
+    -3.3,
+    0
+  ],
+  "Objects.rippleRadius": 2.55,
+  "Banners.count": 8,
+  "Banners.zone": "entry",
+  "Banners.fromX": 7.5,
+  "Banners.toX": 0.4,
+  "Banners.stagger": 0.85,
+  "Banners.rotationDeg": 90,
+  "Banners.turnDeg": 15,
+  "Banners.jitter": 0.1,
+  "Banners.clearance": 0.8,
+  "Banners.seed": 3,
+  "Banners.bottomY": 1,
+  "Banners.bannerScale": 1,
+  "Banners.opacity": 0.55,
+  "Banners.backed": true,
+  "Receipts.count": 61,
+  "Receipts.fromU": 1.2000000000000002,
+  "Receipts.toU": 7.7,
+  "Receipts.fromY": 0.55,
+  "Receipts.toY": 2.1,
+  "Receipts.height": 0.32,
+  "Receipts.scatter": 1,
+  "Receipts.tiltDeg": 15,
+  "Receipts.seed": 40,
+  "Path.Shape.width": 0.5,
+  "Path.Shape.windiness": 1,
+  "Path.Shape.wavelength": 8.600000000000001,
+  "Path.Shape.phaseDeg": 61,
+  "Path.Shape.loopDepth": 4.4,
+  "Path.Shape.laneOffset": -0.05,
+  "Path.Shape.startOverhang": 0.3,
+  "Path.Shape.endX": 8.2,
+  "Path.Light.color": "#70c3f8",
+  "Path.Light.brightness": 0.8,
+  "Path.Light.opacity": 0.06000000000000005,
+  "Path.Light.haloWidth": 3.1,
+  "Path.Light.haloStrength": 0.22999999999999998,
+  "Path.Light.flow": true,
+  "Path.Light.flowSpeed": 1.55,
+  "Path.Light.pulseSpacing": 4.4
+}

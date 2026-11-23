@@ -1,63 +1,32 @@
-# deep dive
+# dive deep
 
-Interactive installation: Next.js kiosk + archive, dive-deep-7 Electron water projection.
+A mobile-first dive through the thoughts people leave at the Dive Deep installation. Scroll down through the sunlight, twilight and midnight zones, tap a fish to read the thought it carries, and add your own ripple.
 
-## Live site
-
-Archive QR target: **https://dive-deep.vercel.app** (deploy Next.js there when ready).  
-Electron still polls **http://localhost:3000** for live ripples during the installation.
-
-On the **local Mac** kiosk (`npm run dev`), receipt PNGs are saved to `data/prints/`. Sending them via **Messages / iMessage** is **off by default** — the app never touches Messages unless you set `IMESSAGE_SEND=1` (then it sends to `IMESSAGE_TO`, and needs Messages signed in plus Automation permission for Terminal/Node). Does not run on Vercel.
-
-## Quick start
-
-**Terminal 1 — kiosk & archive**
+## Run
 
 ```bash
 npm install
-npm run seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Old `/mobile` links (including `?thought=<id>`) redirect to `/`.
+
+## Routes
 
 | Route | Purpose |
 |-------|---------|
-| `/` | Testing hub |
-| `/kiosk` | Deep dive onboarding (prompt cards → fish → friction → release) |
-| `/gallery` | Searchable archive of all submissions |
-| `/projection` | Live constellation wall (second screen) |
-| `/steward/[id]` | Mobile stewardship via QR |
+| `/` | The dive |
+| `GET /api/submissions` | Every thought in the water |
+| `POST /api/submissions` | A new thought from the kiosk (`worry_text`, 1–50 words) |
+| `POST /api/submissions/[id]/uncover` | Count someone uncovering a thought |
+| `GET/POST /api/responses` | Ripples (replies) on a thought, by `submission_id` |
 
-### Prompt → creature
+## Data
 
-| Prompt | Creature |
-|--------|----------|
-| Care | Turtle |
-| Worry | Seahorse |
-| Curiosity | Angelfish |
-| Voice | Betta |
+Thoughts are stored in SQLite (`data/shared-burdens.db`) locally and in Vercel Blob on Vercel. Until there are enough live thoughts, the dive also shows sample responses from `lib/sample-responses.json`.
 
-## Phone / QR testing
-
-**Terminal 2 — projection**
-
-```bash
-cd dive-deep-7
-npm install
-npm start
-```
-
-Send a ripple from the kiosk; it enters the water with the Thought entry animation.
-
-## Print (Anko MX06)
-
-1. Pair **MX06** in macOS Bluetooth settings  
-2. Print from projection (drag a readable thought to the printer icon)  
-3. Composites onto `dive-deep-7/assets/branding/receipt.png`  
-4. Saves PNG to `dive-deep-7/data/prints/` and attempts system print  
-
-- Data is stored in local SQLite at `data/shared-burdens.db`
-- Branding references live in `public/branding/`
-- Thermal printing is stubbed; use on-screen receipt or browser print
-- Re-run `npm run seed` anytime to reset demo content
+| Script | What it does |
+|--------|--------------|
+| `npm run import-responses` | Rebuilds the samples from `components/MobileApp/Kiosk_Worries_Responses.xlsx` |
+| `npm run key-worries` | Names the key worry for any thought that doesn't have one (needs `ANTHROPIC_API_KEY`) |
+| `npm run wipe -- --yes` | Deletes every thought and reply |

@@ -1,140 +1,25 @@
 @import "tailwindcss";
 
-
 :root {
-  --sand: #e9d68c;
-  --rose: #c6979d;
-  --seafoam: #4b908d;
-  --cerulean: #147a90;
-  --navy: #2d3651;
-  --depth: #1a2033;
   /* the darkest colour anywhere: a very dark blue, never black */
   --ink: #0c2a4c;
   --foam: #f4efe4;
-  --glow: #f0e8d0;
-
-  /* Body text is Helvetica, a system font, so there's nothing to load; Arial stands in where it's missing */
-  --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
-
-  /* legacy aliases used by gallery/projection until full rebrand */
-  --cream: var(--foam);
-  --cream-deep: #d9cfc0;
-  --stone: #8a9aa8;
-  --charcoal: var(--navy);
-  --warm: var(--rose);
-  --warm-soft: var(--sand);
-  --background: var(--navy);
-  --foreground: var(--foam);
+  --navy: #2d3651;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-sand: var(--sand);
-  --color-rose: var(--rose);
-  --color-seafoam: var(--seafoam);
-  --color-cerulean: var(--cerulean);
-  --color-navy: var(--navy);
-  --color-depth: var(--depth);
   --color-ink: var(--ink);
   --color-foam: var(--foam);
-  --color-glow: var(--glow);
-  --color-cream: var(--cream);
-  --color-charcoal: var(--charcoal);
-  --color-warm: var(--warm);
-  --color-warm-soft: var(--warm-soft);
-  --color-ocean-deep: var(--depth);
-  --color-ocean-mid: #243044;
-  --color-ripple: var(--seafoam);
-  --color-mist: color-mix(in srgb, var(--foam) 55%, transparent);
-  --font-sans: var(--font-body);
-  --font-serif: var(--font-display);
-  /* no monospace anywhere — anything still asking for it gets the body face */
-  --font-mono: var(--font-body);
 }
 
 body {
   background: var(--navy);
   color: var(--foam);
-  font-family: var(--font-body), system-ui, sans-serif;
+  /* a system font, so there's nothing to load; the dive sets its own face */
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
 }
 
-::selection {
-  background: color-mix(in srgb, var(--seafoam) 45%, transparent);
-}
-
-.deep-dive-bg {
-  background:
-    radial-gradient(ellipse at 20% 10%, rgba(233, 214, 140, 0.22), transparent 42%),
-    radial-gradient(ellipse at 80% 20%, rgba(198, 151, 157, 0.18), transparent 40%),
-    radial-gradient(ellipse at 50% 90%, rgba(20, 122, 144, 0.35), transparent 50%),
-    linear-gradient(165deg, #2d3651 0%, #1a2033 55%, #121826 100%);
-}
-
-/* Compat aliases used by gallery / kiosk */
-.ocean-bg {
-  background:
-    radial-gradient(ellipse at 20% 10%, rgba(233, 214, 140, 0.22), transparent 42%),
-    radial-gradient(ellipse at 80% 20%, rgba(198, 151, 157, 0.18), transparent 40%),
-    radial-gradient(ellipse at 50% 90%, rgba(20, 122, 144, 0.35), transparent 50%),
-    linear-gradient(165deg, #2d3651 0%, #1a2033 55%, #121826 100%);
-}
-
-/* ------------------------------------------------------------------------
- * Ethereal projection type — MingLiU_HKSCS-ExtB, pure white, tracking −100.
- *
- * MingLiU_HKSCS-ExtB is a Windows system font (not on Google Fonts, and its
- * licence doesn't allow serving it as a web font), so it is referenced with
- * local(): the browser uses the copy installed on the installation PC.
- * Its Latin glyphs are fixed-width (½ em each) and it has a single weight.
- * Fallbacks: the other ExtB cuts, then Playfair Display (e.g. on a Mac).
- * ---------------------------------------------------------------------- */
-@font-face {
-  font-family: "Ethereal Ming";
-  src:
-    local("MingLiU_HKSCS-ExtB"),
-    local("MingLiU-ExtB"),
-    local("PMingLiU-ExtB");
-  font-display: swap;
-}
-
-:root {
-  /* Tweak here. 11pt ≈ 14.7px; for a big projection try clamp(10pt, 0.85vw, 16pt). */
-  --ethereal-size: 11pt;
-  /* Tracking −100 (design-tool units = 1/1000 em) → −0.1em. */
-  --ethereal-tracking: -0.1em;
-  --ethereal-family: "Ethereal Ming", "MingLiU_HKSCS-ExtB", "MingLiU-ExtB",
-    var(--font-playfair-display), Georgia, serif;
-}
-
-.ethereal-text {
-  font-family: var(--ethereal-family);
-  font-weight: 400;
-  font-size: var(--ethereal-size);
-  letter-spacing: var(--ethereal-tracking);
-  word-spacing: 0.15em; /* tight tracking needs a touch more word gap */
-  line-height: 1.45;
-  /* Slightly faded white: calmer against the water, still clearly legible. */
-  color: rgba(255, 255, 255, 0.78);
-  font-kerning: normal;
-  text-rendering: geometricPrecision;
-  -webkit-font-smoothing: antialiased;
-  /* No glow: plain white type. */
-  text-shadow: none;
-}
-/* Kept for compatibility; MingLiU has one weight, so both map to 400. */
-.ethereal-light,
-.ethereal-regular {
-  font-family: var(--ethereal-family);
-  font-weight: 400;
-}
-
-/* Aura removed — class kept so existing markup still works. */
-.ethereal-aura {
-  position: relative;
-}
-
-/* ---------- Mobile dive (/mobile) ---------- */
+/* ---------- The dive ---------- */
 /* Small labels on the dive step back a touch in size, spacing and tone */
 .dive-eyebrow {
   font-size: 0.875em;
@@ -142,67 +27,19 @@ body {
   opacity: 0.8;
 }
 
-/* Uneven steps, so each ray wavers and flickers rather than ticking like a pendulum */
-@keyframes dive-ray-sway {
-  0%, 100% { opacity: 0.45; transform: rotate(var(--ray-rot)) translateX(0) scaleX(1); }
-  28% { opacity: 0.95; transform: rotate(calc(var(--ray-rot) + 6deg)) translateX(4vw) scaleX(1.25); }
-  55% { opacity: 0.6; transform: rotate(calc(var(--ray-rot) - 2deg)) translateX(-1vw) scaleX(0.8); }
-  78% { opacity: 1; transform: rotate(calc(var(--ray-rot) - 6deg)) translateX(-4vw) scaleX(1.1); }
-}
-@keyframes dive-rays-drift {
-  0%, 100% { transform: translateX(-3vw) skewX(2deg); }
-  50% { transform: translateX(3vw) skewX(-2deg); }
-}
-@keyframes dive-shimmer {
-  0%, 100% { opacity: 0.8; transform: scaleX(1); }
-  50% { opacity: 1; transform: scaleX(1.06); }
-}
-@keyframes dive-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8px); }
-}
-@keyframes dive-bubble {
-  0% { transform: translateY(0) scale(0.8); opacity: 0; }
-  8% { opacity: 0.85; }
-  85% { opacity: 0.7; }
-  100% { transform: translateY(-110vh) scale(1.15); opacity: 0; }
-}
-@keyframes dive-bubble-wobble {
-  0%, 100% { transform: translateX(-3px) scale(1, 0.92); }
-  50% { transform: translateX(3px) scale(0.94, 1); }
-}
-@keyframes dive-snow-sway {
-  0%, 100% { transform: translateX(-7px) rotate(-20deg); }
-  50% { transform: translateX(7px) rotate(25deg); }
-}
-@keyframes dive-cross {
-  from { transform: translateX(-120px); }
-  to { transform: translateX(calc(100vw + 20px)); }
-}
-@keyframes dive-tail {
-  0%, 100% { transform: skewY(-6deg); }
-  50% { transform: skewY(6deg); }
-}
-/* Tail sweeping toward and away from the viewer: broadside at centre, foreshortened at each extreme */
 @keyframes dive-tail-3d {
   0%, 50%, 100% { transform: scaleX(1) skewY(0deg); }
   25% { transform: scaleX(0.55) skewY(-7deg); }
   75% { transform: scaleX(0.55) skewY(7deg); }
 }
-/* The whole fish turning a few degrees with each stroke… */
 @keyframes dive-yaw {
   0%, 100% { transform: rotateY(-9deg); }
   50% { transform: rotateY(9deg); }
 }
-/* …within a slow wander toward and away from the viewer */
 @keyframes dive-turn {
   0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
   30% { transform: rotateY(24deg) rotateX(4deg); }
   70% { transform: rotateY(-18deg) rotateX(-3deg); }
-}
-@keyframes dive-frill {
-  0%, 100% { transform: skewX(-10deg) scaleY(0.92); }
-  50% { transform: skewX(8deg) scaleY(1.08); }
 }
 @keyframes dive-bob-small {
   0%, 100% { transform: translateY(-1.5px); }
@@ -212,45 +49,6 @@ body {
   0%, 100% { transform: rotate(-6deg); }
   50% { transform: rotate(7deg); }
 }
-@keyframes dive-snow {
-  0% { transform: translateY(0); opacity: 0; }
-  10% { opacity: 1; }
-  100% { transform: translateY(112vh); opacity: 0.2; }
-}
-@keyframes dive-lure {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
-}
-@keyframes dive-grain-drift {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-1.2%, 0.8%); }
-}
-
-
-/* A reached depth checkpoint (and your own marker) breathing softly */
-@keyframes dive-orb-pulse {
-  0%, 100% { opacity: 1; filter: brightness(1); }
-  50% { opacity: 0.75; filter: brightness(1.35); }
-}
-/* Light rippling out from something waiting to be tapped, in its own shape */
-@keyframes dive-call-shape {
-  0% { opacity: 0.75; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.6); }
-}
-/* Liquid-glass logo: a highlight gliding across, and caustics drifting inside */
-@keyframes dive-glass-sheen {
-  0%, 15% { background-position: 130% 0; }
-  65%, 100% { background-position: -30% 0; }
-}
-@keyframes dive-glass-caustic {
-  0%, 100% { background-position: 0% 0%; }
-  50% { background-position: 100% 100%; }
-}
-@keyframes dive-star {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.8); }
-}
-
 @keyframes dive-sub-bob {
   0%, 100% { transform: translateY(-3px) rotate(-1.5deg); }
   50% { transform: translateY(3px) rotate(1.5deg); }
@@ -274,13 +72,11 @@ body {
   50% { transform: translate(calc(var(--swim) * var(--face) * -1), var(--rise, 0px)) scaleX(calc(var(--face) * -1)); }
   96% { transform: translate(0, 0) scaleX(calc(var(--face) * -1)); }
 }
-/* A ring spreading out from where a drop landed, slowing and fading as it goes */
 @keyframes dive-ripple {
   0% { transform: scale(0.06); opacity: 0; }
   8% { opacity: 1; }
   100% { transform: scale(1); opacity: 0; }
 }
-/* Rings held round something, swelling and settling as the water lifts and falls */
 @keyframes dive-ripple-still {
   0%, 100% { transform: scale(var(--ring)); opacity: 1; }
   50% { transform: scale(calc(var(--ring) * 1.03)); opacity: 0.8; }
@@ -289,37 +85,29 @@ body {
   0%, 100% { transform: rotate(-10deg) scaleY(0.9); }
   50% { transform: rotate(12deg) scaleY(1.05); }
 }
-
-/* Seagrass bending one way and back in a slow current, rooted at its base */
 @keyframes dive-sway {
   0%, 100% { transform: rotate(-5deg) skewX(-3deg); }
   50% { transform: rotate(6deg) skewX(4deg); }
 }
-
-/* A drifter rising and falling, nudged along by the current, never turning */
 @keyframes dive-drift {
   0%, 100% { transform: translate(0, 0); }
   25% { transform: translate(calc(var(--swim) * 0.35), -16px); }
   50% { transform: translate(calc(var(--swim) * 0.6), 4px); }
   75% { transform: translate(calc(var(--swim) * 0.25), -10px); }
 }
-/* A turtle's flipper rowing like a wing */
 @keyframes dive-flipper {
   0%, 100% { transform: rotate(-14deg); }
   50% { transform: rotate(16deg); }
 }
-/* A jellyfish bell (or an octopus's web) squeezing to push off, then refilling */
 @keyframes dive-pulse {
   0%, 100% { transform: scale(1, 1); }
   40% { transform: scale(1.06, 0.86); }
   70% { transform: scale(0.97, 1.04); }
 }
-/* An eel's long body rippling */
 @keyframes dive-undulate {
   0%, 100% { transform: skewY(-5deg) scaleX(0.97); }
   50% { transform: skewY(5deg) scaleX(1.02); }
 }
-/* Ear-like fins flapping, each side mirroring the other */
 @keyframes dive-flap {
   0%, 100% { transform: rotate(-16deg); }
   50% { transform: rotate(10deg); }
@@ -328,13 +116,9 @@ body {
   0%, 100% { transform: rotate(16deg); }
   50% { transform: rotate(-10deg); }
 }
-
-/* The ring of words round the guide fish, turning slowly */
 @keyframes dive-orbit {
   to { transform: rotate(360deg); }
 }
-
-/* Dashes drifting down a chain's line, one whole dash pattern per loop */
 @keyframes dive-current {
   to { stroke-dashoffset: -58; }
 }
@@ -370,40 +154,15 @@ body {
 .dive-sub-bob { animation: dive-sub-bob 3.2s ease-in-out infinite; }
 .dive-prop { animation: dive-prop 0.4s linear infinite; }
 .dive-sub-bubble { animation: dive-sub-bubble 1.6s ease-out infinite; }
-.dive-star { animation: dive-star 3s ease-in-out infinite; }
-.dive-call-shape {
-  animation: dive-call-shape 2.6s ease-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.dive-glass-sheen { animation: dive-glass-sheen 7s ease-in-out infinite; }
-.dive-glass-caustic { animation: dive-glass-caustic 12s ease-in-out infinite; }
-.dive-orb-pulse { animation: dive-orb-pulse 2.8s ease-in-out infinite; }
-.dive-ray { animation: dive-ray-sway 9s ease-in-out infinite; }
-.dive-rays-drift { animation: dive-rays-drift 16s ease-in-out infinite; }
-.dive-shimmer { animation: dive-shimmer 7s ease-in-out infinite; }
-.dive-bob { animation: dive-bob 1.8s ease-in-out infinite; }
-.dive-bubble { animation: dive-bubble 12s cubic-bezier(0.45, 0, 0.75, 1) infinite; }
-.dive-bubble-wobble { animation: dive-bubble-wobble 1.2s ease-in-out infinite; }
-.dive-snow-sway { animation: dive-snow-sway 6s ease-in-out infinite; }
-.dive-cross { animation: dive-cross 14s linear infinite; }
-.dive-tail { animation: dive-tail 0.9s ease-in-out infinite; }
-.dive-frill { animation: dive-frill 1.6s ease-in-out infinite; }
 .dive-tail-3d { animation: dive-tail-3d 0.9s linear infinite; }
 .dive-yaw { animation: dive-yaw 1s ease-in-out infinite; transform-style: preserve-3d; }
 .dive-turn { animation: dive-turn 8s ease-in-out infinite; transform-style: preserve-3d; }
 .dive-bob-small { animation: dive-bob-small 2.2s ease-in-out infinite; }
 .dive-lure-sway { animation: dive-lure-sway 4.5s ease-in-out infinite; }
-.dive-snow { animation: dive-snow 24s linear infinite; }
-.dive-lure { animation: dive-lure 2.4s ease-in-out infinite; }
-.dive-grain-drift { animation: dive-grain-drift 28s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .dive-ray, .dive-rays-drift, .dive-shimmer, .dive-bob, .dive-bubble,
-  .dive-snow, .dive-lure, .dive-bubble-wobble, .dive-snow-sway,
-  .dive-cross, .dive-tail, .dive-tail-3d, .dive-yaw, .dive-turn, .dive-frill, .dive-bob-small, .dive-lure-sway,
-  .dive-star, .dive-orb-pulse, .dive-call-shape, .dive-glass-sheen, .dive-glass-caustic,
-  .dive-sub-bob, .dive-prop, .dive-sub-bubble, .dive-grain-drift,
+  .dive-tail-3d, .dive-yaw, .dive-turn, .dive-bob-small, .dive-lure-sway,
+  .dive-sub-bob, .dive-prop, .dive-sub-bubble,
   .dive-swim, .dive-ripple, .dive-ripple-once, .dive-ripple-still, .dive-fin, .dive-sway,
   .dive-drift, .dive-flipper, .dive-pulse, .dive-undulate, .dive-flap, .dive-flap-r,
   .dive-current, .dive-orbit {
@@ -411,4 +170,48 @@ body {
   }
   /* a splash only makes sense moving */
   .dive-ripple-once { display: none; }
+}
+
+/* ---------- About ---------- */
+/* a thread of light slipping downward: "keep going" */
+@keyframes about-descend {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+.about-descend { animation: about-descend 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .about-descend { animation: none; }
+}
+
+/* zoom buttons on the embedded installation model (/about) */
+.installation-zoom {
+  position: absolute;
+  right: clamp(1.5rem, 4vw, 3rem);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: auto;
+  z-index: 2;
+}
+.installation-zoom button {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(143, 211, 255, 0.25);
+  background: rgba(5, 7, 12, 0.55);
+  color: rgba(228, 230, 232, 0.8);
+  font-size: 1.15rem;
+  line-height: 1;
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: border-color 0.3s, color 0.3s, background 0.3s;
+}
+.installation-zoom button:hover,
+.installation-zoom button:focus-visible {
+  border-color: rgba(143, 211, 255, 0.6);
+  color: #fff;
+  background: rgba(20, 40, 60, 0.6);
+  outline: none;
 }
