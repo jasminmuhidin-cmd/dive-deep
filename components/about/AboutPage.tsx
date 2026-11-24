@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
 import InstallationViewer from "@/components/installation-3d/InstallationViewer";
 import OutlineLogo from "@/components/branding/OutlineLogo";
+import DiveNav from "@/components/DiveNav";
 
 // Matches the 3D scene's background so the hero melts into the page
 const DEEP = "#05070c";
@@ -52,6 +53,12 @@ function Eyebrow({ children }: { children: ReactNode }) {
 export default function AboutPage({ className = "" }: { className?: string }) {
   return (
     <main className={`${className} relative min-h-screen overflow-x-clip text-[#e4e6e8]`} style={{ background: DEEP }}>
+      <DiveNav
+        searchHref="/?search=1"
+        tone="light"
+        className="absolute left-[calc(env(safe-area-inset-left)+1.5rem)] right-[calc(env(safe-area-inset-right)+1.5rem)] top-[calc(env(safe-area-inset-top)+0.5rem)] z-30"
+      />
+
       {/* ── Landing: the installation ─────────────────────────────── */}
       <section className="relative h-[100svh] min-h-[560px]" aria-label="3D model of the Dive Deep installation">
         <InstallationViewer embedded />

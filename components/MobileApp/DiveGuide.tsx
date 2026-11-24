@@ -134,7 +134,11 @@ const GUIDE: RippleNode[] = [
 /** How to explore, unfolding out of the guide fish the same way every thought does */
 export function GuideSteps({ fishRef }: { fishRef: RefObject<HTMLElement | null> }) {
   return (
-    <section id="dive-guide" aria-label="How to explore" className="mx-auto max-w-lg pb-[4svh] pl-3 pr-16 md:max-w-2xl">
+    <section
+      id="dive-guide"
+      aria-label="How to explore"
+      className="pb-[4svh] pl-[calc(env(safe-area-inset-left)+1.5rem)] pr-[calc(env(safe-area-inset-right)+1.5rem)]"
+    >
       <RippleChain nodes={GUIDE} anchorRef={fishRef} seed="guide" />
     </section>
   );

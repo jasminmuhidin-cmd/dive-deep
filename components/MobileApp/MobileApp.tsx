@@ -1,7 +1,7 @@
 "use client";
 
 import OutlineLogo from "@/components/branding/OutlineLogo";
-import Link from "next/link";
+import DiveNav from "@/components/DiveNav";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type Ref, type RefObject } from "react";
 import {
   AnimatePresence,
@@ -14,7 +14,6 @@ import {
   useReducedMotion,
   useTransform,
 } from "framer-motion";
-import { Search } from "lucide-react";
 import type { Submission, WorryWeight } from "@/lib/types";
 import { sortByWeight, worryWeight } from "@/lib/issue-depth";
 import SAMPLE_RESPONSES from "@/lib/sample-responses.json";
@@ -95,8 +94,10 @@ const SECTIONS: { weight: WorryWeight; title: string; line: string }[] = [
   { weight: "deep", title: "midnight zone", line: "Stays with people, carried deeply." },
 ];
 
-/** The column everything hangs in. The right margin is wider, to keep clear of the depth line. */
-const FRAME = "mx-auto max-w-lg pl-6 pr-10 md:max-w-3xl md:pr-16";
+/** Keep the wordmark centered while the rest of the page runs close to the viewport edges. */
+const TITLE_FRAME = "mx-auto w-full max-w-lg pl-6 pr-10 md:max-w-3xl md:pr-16";
+const EDGE_FRAME =
+  "pl-[calc(env(safe-area-inset-left)+1.5rem)] pr-[calc(env(safe-area-inset-right)+1.5rem)]";
 
 const sectionOf = (s: Submission) => SECTIONS.find((x) => x.weight === worryWeight(s))?.title ?? "";
 
@@ -150,6 +151,12 @@ export default function MobileApp({ className = "" }: { className?: string }) {
   const depthsRef = useRef<HTMLElement>(null);
   const deepestRef = useRef<HTMLElement>(null);
   const floorRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("search") !== "1") return;
+    const frame = window.requestAnimationFrame(() => setSearching(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   // Live thoughts from the kiosk, with the samples as filler. A link like
   // /?thought=<id> (the kiosk's "Dive in") opens that thought on arrival.
@@ -230,7 +237,14 @@ export default function MobileApp({ className = "" }: { className?: string }) {
 
   const toggle = useCallback((sub: Submission) => setOpenId((cur) => (cur === sub.id ? null : sub.id)), []);
   const openSearch = useCallback(() => setSearching(true), []);
-  const closeSearch = useCallback(() => setSearching(false), []);
+  const closeSearch = useCallback(() => {
+    setSearching(false);
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("search") === "1") {
+      url.searchParams.delete("search");
+      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, []);
   const pick = useCallback((sub: Submission) => {
     setSearching(false);
     setOpenId(sub.id);
@@ -254,7 +268,7 @@ export default function MobileApp({ className = "" }: { className?: string }) {
             <section key={weight} aria-labelledby={`section-${weight}`}>
               <SectionHeader ref={sectionRefs[weight]} id={`section-${weight}`} title={title} line={line} />
               {/* fish swim their share of this column, so it's their size container */}
-              <div className="mx-auto max-w-lg pb-[6svh] pl-3 pr-10 md:max-w-3xl md:pr-24">
+              <div className={`${EDGE_FRAME} pb-[6svh]`}>
                 <div className="@container" style={{ "--lume": ZONES[weight].lume } as CSSProperties}>
                   {sections[weight].map((sub, i) => (
                     <ThoughtFish
@@ -330,12 +344,12 @@ function Intro({
     <section className="relative">
       {/* one screen and half the guide fish tall, so only the fish's top half peeks up at the foot of the screen */}
       <div
-        className={`${FRAME} flex flex-col pt-[calc(env(safe-area-inset-top)+0.5rem)]`}
+        className={`${EDGE_FRAME} flex flex-col pt-[calc(env(safe-area-inset-top)+0.5rem)]`}
         style={{ minHeight: `calc(100svh + ${GUIDE_BOX / 2}px)` }}
       >
         <DiveNav onSearch={onSearch} />
 
-        <motion.div className="mt-[6svh]" {...fade(0)}>
+        <motion.div className={`${TITLE_FRAME} mt-[6svh]`} {...fade(0)}>
           <OutlineLogo />
         </motion.div>
 
@@ -386,38 +400,12 @@ function CountUp({ to, className = "" }: { to: number; className?: string }) {
   return <motion.span className={className}>{shown}</motion.span>;
 }
 
-/** Plain words across the top, spread evenly, the way in to search at the far edge */
-function DiveNav({ onSearch }: { onSearch: () => void }) {
-  const link = "flex min-h-11 items-center tracking-[0.04em] transition hover:opacity-60";
-  return (
-    <nav aria-label="Main" className="flex items-center justify-between">
-      <Link href="/" className={link}>
-        home
-      </Link>
-      <Link href="/kiosk" className={link}>
-        kiosk
-      </Link>
-      <Link href="/projection" className={link}>
-        installation
-      </Link>
-      <button
-        type="button"
-        onClick={onSearch}
-        aria-label="Search the thoughts"
-        className="-mr-3 grid h-11 w-11 place-items-center rounded-full transition hover:opacity-60"
-      >
-        <Search className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-      </button>
-    </nav>
-  );
-}
-
 /** A section's heading under a line across the water: its name, and a line on what's here */
 function SectionHeader({ ref, id, title, line }: { ref?: Ref<HTMLElement>; id: string; title: string; line: string }) {
   return (
     <motion.header
       ref={ref}
-      className={`${FRAME} pb-[5svh] pt-[16svh]`}
+      className={`${EDGE_FRAME} pb-[5svh] pt-[16svh]`}
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-15% 0px" }}

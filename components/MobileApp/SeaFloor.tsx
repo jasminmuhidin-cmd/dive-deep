@@ -120,7 +120,10 @@ export default function SeaFloor({ ref, count }: { ref?: Ref<HTMLElement>; count
       </div>
 
       {/* the near bank, where the words rest */}
-      <div className="relative -mt-[60px] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pl-6 pr-16 pt-[92px] text-center md:px-6" style={NEAR_BANK}>
+      <div
+        className="relative -mt-[60px] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pl-[calc(env(safe-area-inset-left)+1.5rem)] pr-[calc(env(safe-area-inset-right)+1.5rem)] pt-[92px] text-center"
+        style={NEAR_BANK}
+      >
         <h2 className="mx-auto max-w-[18rem] text-xl font-bold leading-snug">
           {count > 0
             ? `${count.toLocaleString()} ${count === 1 ? "thought is" : "thoughts are"} held down here with you.`

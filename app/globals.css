@@ -1,15 +1,25 @@
 @import "tailwindcss";
+@import "./kiosk/kiosk.css";
 
 :root {
   /* the darkest colour anywhere: a very dark blue, never black */
+  --sand: #e9d68c;
+  --rose: #c6979d;
+  --seafoam: #4b908d;
+  --glow: #f0e8d0;
   --ink: #0c2a4c;
   --foam: #f4efe4;
   --navy: #2d3651;
 }
 
 @theme inline {
+  --color-sand: var(--sand);
+  --color-rose: var(--rose);
+  --color-seafoam: var(--seafoam);
+  --color-glow: var(--glow);
   --color-ink: var(--ink);
   --color-foam: var(--foam);
+  --color-navy: var(--navy);
 }
 
 body {
@@ -17,6 +27,24 @@ body {
   color: var(--foam);
   /* a system font, so there's nothing to load; the dive sets its own face */
   font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+}
+
+.deep-dive-bg,
+.ocean-bg {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(233, 214, 140, 0.22), transparent 42%),
+    radial-gradient(ellipse at 80% 20%, rgba(198, 151, 157, 0.18), transparent 40%),
+    radial-gradient(ellipse at 50% 90%, rgba(20, 122, 144, 0.35), transparent 50%),
+    linear-gradient(165deg, #2d3651 0%, #1a2033 55%, #121826 100%);
+}
+
+@keyframes dive-orb-pulse {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.75; filter: brightness(1.35); }
+}
+
+.dive-orb-pulse {
+  animation: dive-orb-pulse 2.8s ease-in-out infinite;
 }
 
 /* ---------- The dive ---------- */
@@ -168,6 +196,7 @@ body {
   .dive-current, .dive-orbit {
     animation: none;
   }
+  .dive-orb-pulse { animation: none; }
   /* a splash only makes sense moving */
   .dive-ripple-once { display: none; }
 }
