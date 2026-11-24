@@ -3,6 +3,6 @@ dive-deep-7/electron
 dive-deep-7/node_modules
 dive-deep-7/tests
 dive-deep-7/data
-receipt.png
+/receipt.png
 *.pdf.png
 .vscode
