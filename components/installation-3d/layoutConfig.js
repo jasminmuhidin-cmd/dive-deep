@@ -62,6 +62,10 @@ const layout = {
     // the orbit target is the centre of the plan; the camera sits at this offset from it
     offset: [17, 16, 14],
     zoom: 52, // pixels per metre
+    embedded: {
+      offset: [17, 11, 14],
+      zoom: 60,
+    },
     minZoom: 18,
     maxZoom: 220,
     minPolarDeg: 12, // can't flip over the top

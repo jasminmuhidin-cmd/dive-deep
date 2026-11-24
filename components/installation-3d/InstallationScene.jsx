@@ -25,7 +25,7 @@ function planFrame(layout) {
 }
 
 function CameraRig({ layout, controlsRef, zoomTarget, embedded, touch }) {
-  const cfg = layout.camera;
+  const cfg = embedded ? { ...layout.camera, ...layout.camera.embedded } : layout.camera;
   // camera framing is fixed at load; "Reset camera" returns here
   const [initial] = useState(() => {
     const { center } = planFrame(layout);

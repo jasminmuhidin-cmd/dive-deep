@@ -70,8 +70,8 @@ export default function AboutPage({ className = "" }: { className?: string }) {
           style={{ background: `linear-gradient(to bottom, transparent, ${DEEP} 92%)` }}
         />
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 px-6 pb-10 sm:px-12 sm:pb-14">
-          <div className="mx-auto flex max-w-6xl items-end justify-between gap-8">
+        <div className="pointer-events-none absolute bottom-0 left-[calc(env(safe-area-inset-left)+1.5rem)] right-[calc(env(safe-area-inset-right)+1.5rem)] pb-10 sm:pb-14">
+          <div className="flex items-end justify-between gap-8">
             <Surface>
               <OutlineLogo tone="light" className="w-[min(72vw,26rem)]" />
             </Surface>
