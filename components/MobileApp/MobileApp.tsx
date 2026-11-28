@@ -307,8 +307,8 @@ export default function MobileApp({ className = "" }: { className?: string }) {
 
 /**
  * The opening screen: the ways in and out, the name, what this is, how many
- * thoughts are in the water, and a fish waiting at the bottom to show you how
- * to explore.
+ * thoughts are in the water, and a fish in the centre to show you how to
+ * explore.
  */
 function Intro({
   startRef,
@@ -368,18 +368,7 @@ function Intro({
           </span>
         </motion.p>
 
-        {/* the words sit low, just above the fish */}
-        <motion.p
-          // justified edge to edge, last line included, and never hyphenated, so the gaps open into white rivers
-          className="mt-auto pt-[6svh] text-justify leading-[2.3] tracking-[0.02em] [hyphens:none] [text-align-last:justify] [word-spacing:0.08em]"
-          {...fade(0.3)}
-        >
-          Dive Deep is an interactive, multi-touch installation and web experience that transforms individual
-          care into collective ripples. Step into a space where your private thoughts dissolve into a shared
-          ecosystem of care.
-        </motion.p>
-
-        <div ref={startRef} className="mt-[3svh] self-center">
+        <div ref={startRef} className="flex flex-1 items-center justify-center">
           <GuidePrompt fishRef={fishRef} open={guideOpen} onToggle={() => setGuideOpen((o) => !o)} />
         </div>
       </div>
